@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/Badge";
 
-type UserStatus = "online" | "offline" | "busy";
+export type UserStatus = "online" | "offline" | "busy";
 
 type UserProfileProps = {
   name: string;
