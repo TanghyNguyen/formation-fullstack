@@ -44,14 +44,29 @@ export default function Home() {
     },
   ];
   const [currentStatus, setCurrentStatus] = useState<UserStatus | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const filteredProfiles = profiles.filter((profile) => {
-    if (currentStatus === "all") return true;
-    return profile.status === currentStatus;
+    const nameMatches = profile.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const statusMatches =
+      currentStatus === "all" || profile.status === currentStatus;
+    return nameMatches && statusMatches;
   });
+
   return (
     <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">Mes composants</h1>
+        <input
+          type="text"
+          placeholder="Rechercher un profil..."
+          value={searchQuery}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            setSearchQuery(event.target.value)
+          }
+          className="border rounded px-3 py-2 w-full"
+        />
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentStatus("all")}
