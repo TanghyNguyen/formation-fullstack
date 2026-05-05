@@ -46,12 +46,19 @@ export function UserList() {
     return <p>{userList.message}</p>;
   }
   return (
-    <ul>
-      {userList.data.map((user) => (
-        <li key={user.id}>
-          Nom : {user.name} - Email: {user.email}
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-3">
+      <h2 className="text-xl font-bold md:text-2xl">Utilisateurs (API)</h2>
+      <ul className="space-y-3">
+        {userList.data.map((user) => (
+          <li
+            key={user.id}
+            className="border rounded p-3 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span className="font-medium">{user.name}</span>
+            <span className="text-sm text-gray-500">{user.email}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
