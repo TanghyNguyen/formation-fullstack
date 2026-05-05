@@ -56,9 +56,9 @@ export default function Home() {
   });
 
   return (
-    <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Mes composants</h1>
+    <main className="min-h-screen p-4 md:p-8 bg-gray-50 text-gray-900">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <h1 className="text-xl font-bold md:text-3xl">Mes composants</h1>
         <UserList />
         <input
           type="text"
@@ -69,7 +69,7 @@ export default function Home() {
           }
           className="border rounded px-3 py-2 w-full"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setCurrentStatus("all")}
             className={`px-3 py-1 rounded text-sm font-medium ${
@@ -111,16 +111,18 @@ export default function Home() {
             Occupé(e)
           </button>
         </div>
-        {filteredProfiles.map((profile) => (
-          <Card key={profile.name} title={profile.name}>
-            <UserProfile
-              name={profile.name}
-              role={profile.role}
-              skills={profile.skills}
-              status={profile.status}
-            />
-          </Card>
-        ))}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {filteredProfiles.map((profile) => (
+            <Card key={profile.name} title={profile.name}>
+              <UserProfile
+                name={profile.name}
+                role={profile.role}
+                skills={profile.skills}
+                status={profile.status}
+              />
+            </Card>
+          ))}
+        </div>
       </div>
     </main>
   );
