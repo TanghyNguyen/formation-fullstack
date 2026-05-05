@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Card } from "@/components/Card";
 import { UserProfile, UserStatus } from "@/components/UserProfile";
+import { UserList } from "@/components/UserList";
 
 type Profile = {
   name: string;
@@ -58,6 +59,7 @@ export default function Home() {
     <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">Mes composants</h1>
+        <UserList />
         <input
           type="text"
           placeholder="Rechercher un profil..."
