@@ -1,12 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import TodoItem from "@/components/TodoItem";
-
-type Todo = {
-  id: string;
-  title: string;
-  isCompleted: boolean;
-};
+import type { Todo } from "@/types";
 
 export default function HomePage() {
   const [todos, setTodos] = useState<Todo[]>([]);

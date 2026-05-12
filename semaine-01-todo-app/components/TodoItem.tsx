@@ -1,9 +1,7 @@
 "use client";
+import type { Todo } from "@/types";
 
-type TodoItemProps = {
-  id: string;
-  title: string;
-  isCompleted: boolean;
+type TodoItemProps = Todo & {
   onToggle: () => void;
   onDelete: () => void;
 };
