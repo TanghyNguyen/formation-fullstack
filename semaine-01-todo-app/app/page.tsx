@@ -30,12 +30,16 @@ export default function HomePage() {
     const newDelete = todos.filter((todo) => todo.id !== id);
     setTodos(newDelete);
   }
+  const remainingCount = todos.filter((t) => !t.isCompleted).length;
   return (
     <main className="max-w-2xl mx-auto min-h-screen py-10">
-      <h1>Todo App</h1>
-      <form onSubmit={handleSubmit}>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">Todo App</h1>
+      <p className="text-sm text-gray-500 mb-4">
+        {remainingCount} tâche(s) restante(s)
+      </p>
+      <form className="flex gap-2 mb-6" onSubmit={handleSubmit}>
         <input
-          className="border px-2 py-1"
+          className="border px-2 py-1 w-full"
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
@@ -59,6 +63,11 @@ export default function HomePage() {
           />
         ))}
       </ul>
+      {todos.length === 0 && (
+        <p className="text-gray-400 text-sm mt-4">
+          Aucune tâche pour le moment
+        </p>
+      )}
     </main>
   );
 }
