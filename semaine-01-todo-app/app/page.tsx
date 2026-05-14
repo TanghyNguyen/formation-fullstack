@@ -32,20 +32,22 @@ export default function HomePage() {
   }
   const remainingCount = todos.filter((t) => !t.isCompleted).length;
   return (
-    <main className="max-w-2xl mx-auto min-h-screen py-10">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Todo App</h1>
-      <p className="text-sm text-gray-500 mb-4">
+    <main className="max-w-2xl mx-auto min-h-screen py-10 px-4">
+      <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+        Todo App
+      </h1>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         {remainingCount} tâche(s) restante(s)
       </p>
       <form className="flex gap-2 mb-6" onSubmit={handleSubmit}>
         <input
-          className="border px-2 py-1 w-full"
+          className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 rounded w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors duration-150"
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
         <button
-          className="bg-blue-600 text-white px-3 py-1 rounded ml-2"
+          className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2 rounded transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer"
           type="submit"
         >
           Ajouter
@@ -64,7 +66,7 @@ export default function HomePage() {
         ))}
       </ul>
       {todos.length === 0 && (
-        <p className="text-gray-400 text-sm mt-4">
+        <p className="text-gray-400 dark:text-gray-600 text-sm mt-4">
           Aucune tâche pour le moment
         </p>
       )}
