@@ -1,0 +1,31 @@
+export const SCALES: Record<string, readonly number[]> = {
+  major: [0, 2, 4, 5, 7, 9, 11],
+  minor: [0, 2, 3, 5, 7, 8, 10],
+  harmonicMinor: [0, 2, 3, 5, 7, 8, 11],
+  melodicMinor: [0, 2, 3, 5, 7, 9, 11],
+  blues: [0, 3, 5, 6, 7, 10],
+  pentatonic: [0, 2, 4, 7, 9],
+  pentatonicMinor: [0, 3, 5, 7, 10],
+  wholeTone: [0, 2, 4, 6, 8, 10],
+  phrygianDominant: [0, 1, 4, 5, 7, 8, 10],
+  lydianB7: [0, 2, 4, 6, 7, 9, 10],
+  superLocrian: [0, 1, 3, 4, 6, 8, 10],
+  melodicMinorDesc: [0, 2, 3, 5, 7, 8, 10],
+  ionian: [0, 2, 4, 5, 7, 9, 11],
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+  lydian: [0, 2, 4, 6, 7, 9, 11],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10],
+  locrian: [0, 1, 3, 5, 6, 8, 10],
+  doubleHarmonicMinor: [0, 1, 4, 5, 7, 8, 11],
+  hungarianMinor: [0, 2, 3, 6, 7, 8, 11],
+  hirajoshi: [0, 2, 3, 7, 8],
+  egyptian: [0, 2, 5, 7, 10],
+};
+
+export function pitchClassesFromRoot(
+  rootPc: number,
+  intervals: readonly number[],
+): Set<number> {
+  return new Set(intervals.map((interval) => (rootPc + interval) % 12));
+}
