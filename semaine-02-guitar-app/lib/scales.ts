@@ -23,6 +23,31 @@ export const SCALES: Record<string, readonly number[]> = {
   egyptian: [0, 2, 5, 7, 10],
 };
 
+export const SCALE_LABELS: Record<string, string> = {
+  major: "Majeure",
+  minor: "Mineure naturelle",
+  harmonicMinor: "Mineure harmonique",
+  melodicMinor: "Mineure mélodique (asc.)",
+  melodicMinorDesc: "Mineure mélodique (desc.)",
+  blues: "Blues",
+  pentatonic: "Pentatonique majeure",
+  pentatonicMinor: "Pentatonique mineure",
+  wholeTone: "Gamme par tons",
+  ionian: "Ionien",
+  dorian: "Dorien",
+  phrygian: "Phrygien",
+  lydian: "Lydien",
+  mixolydian: "Mixolydien",
+  locrian: "Locrien",
+  phrygianDominant: "Phrygien dominant",
+  lydianB7: "Lydien ♭7",
+  superLocrian: "Super Locrien",
+  doubleHarmonicMinor: "Double harmonique",
+  hungarianMinor: "Hongroise",
+  hirajoshi: "Hirajoshi",
+  egyptian: "Égyptienne",
+};
+
 export function pitchClassesFromRoot(
   rootPc: number,
   intervals: readonly number[],
