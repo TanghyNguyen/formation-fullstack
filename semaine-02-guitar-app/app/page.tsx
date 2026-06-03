@@ -8,53 +8,87 @@ export default function HomePage() {
   const [rootPc, setRootPc] = useState(0); // C par défaut
   const [currentScale, setCurrentScale] = useState("major");
   const [useFlats, setUseFlats] = useState(false);
-  const [lastNote, setLastNote] = useState<string | null>(null);
   const highlightSet = pitchClassesFromRoot(rootPc, SCALES[currentScale]);
   return (
-    <main className="max-w-4xl mx-auto min-h-screen py-10 px-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+    <main className="w-full max-w-5xl mx-auto min-h-screen py-10 px-4">
+      <h1 className="text-3xl font-bold text-gray-200 dark:text-gray-100">
         Guitar App
       </h1>
-      <div className="flex gap-2 py-4 px-2 border rounded-md items-center mb-4">
-        <select
-          name="root"
-          id="root"
-          className="p-2 rounded-md border-gray-300"
-          onChange={(e) => setRootPc(parseInt(e.target.value, 10))}
+      <div
+        className="flex flex-wrap gap-4 py-4 px-4 rounded-lg items-end mb-6"
+        style={{
+          background: "var(--panel)",
+          border: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        <label
+          className="flex flex-col gap-1 text-sm"
+          style={{ color: "var(--muted)" }}
         >
-          {NOTE_NAMES_SHARP.map((note, index) => (
-            <option key={index} value={index}>
-              {note}
-            </option>
-          ))}
-        </select>
-        <select
-          name="scale"
-          id="scale"
-          onChange={(e) => setCurrentScale(e.target.value)}
+          Fondamentale
+          <select
+            style={{
+              background: "var(--wood-dark)",
+              color: "var(--text)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
+            className="rounded-md px-3 py-2 text-sm"
+            onChange={(e) => setRootPc(parseInt(e.target.value, 10))}
+            value={rootPc}
+          >
+            {NOTE_NAMES_SHARP.map((note, index) => (
+              <option key={index} value={index}>
+                {note}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label
+          className="flex flex-col gap-1 text-sm"
+          style={{ color: "var(--muted)" }}
         >
-          {Object.keys(SCALES).map((scale) => (
-            <option key={scale} value={scale}>
-              {SCALE_LABELS[scale] ?? scale}
-            </option>
-          ))}
-        </select>
-        <input
-          type="checkbox"
-          name="useFlats"
-          id="useFlats"
-          onChange={(e) => setUseFlats(e.target.checked)}
-        />
+          Gamme
+          <select
+            style={{
+              background: "var(--wood-dark)",
+              color: "var(--text)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
+            className="rounded-md px-3 py-2 text-sm"
+            onChange={(e) => setCurrentScale(e.target.value)}
+            value={currentScale}
+          >
+            {Object.keys(SCALES).map((scale) => (
+              <option key={scale} value={scale}>
+                {SCALE_LABELS[scale] ?? scale}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label
+          className="flex flex-col gap-1 text-sm"
+          style={{ color: "var(--muted)" }}
+        >
+          Bémols
+          <input
+            type="checkbox"
+            style={{
+              background: "var(--wood-dark)",
+              color: "var(--text)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
+            className="rounded-md px-3 py-8 text-sm"
+            onChange={(e) => setUseFlats(e.target.checked)}
+            checked={useFlats}
+          />
+        </label>
       </div>
       <FretBoard
         highlightSet={highlightSet}
         rootPc={rootPc}
         useFlats={useFlats}
-        onCellClick={(pc, note) => setLastNote(note)}
+        onCellClick={(pc) => setRootPc(pc)}
       />
-      {lastNote && (
-        <p className="mt-4 text-sm text-gray-600">Note : {lastNote}</p>
-      )}
     </main>
   );
 }

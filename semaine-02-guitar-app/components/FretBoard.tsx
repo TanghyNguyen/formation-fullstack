@@ -11,7 +11,7 @@ type FretBoardProps = {
   highlightSet: Set<number>;
   rootPc: number;
   useFlats: boolean;
-  onCellClick: (pc: number, note: string) => void;
+  onCellClick: (pc: number) => void;
 };
 
 const NUM_FRETS = 16;
@@ -29,26 +29,67 @@ export default function FretBoard({
   const frets = Array.from({ length: NUM_FRETS + 1 }, (_, i) => i);
 
   return (
-    <div className="flex flex-col gap-1">
-      {strings.map((si) => (
-        <div key={si} className="flex gap-1 items-center">
-          <span className="w-6 text-xs text-gray-400">
-            {guitarStringNumberFromSi(si)}
-          </span>
-          {frets.map((fret) => {
-            const pc = pitchClassAt(si, fret);
-            return (
-              <FretCell
-                key={fret}
-                note={noteName(pc, useFlats)}
-                isHighlighted={highlightSet.has(pc)}
-                isRoot={pc === rootPc}
-                onClick={() => onCellClick(pc, noteName(pc, useFlats))}
-              />
-            );
-          })}
+    <div className="w-full pb-2">
+      <div
+        style={{
+          background:
+            "linear-gradient(180deg, var(--wood) 0%, var(--wood-dark) 100%)",
+          borderRadius: "10px",
+          padding: "0.65rem 0.75rem",
+          boxShadow:
+            "inset 0 2px 16px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.35)",
+        }}
+        className="flex flex-col gap-1 w-full"
+      >
+        <div
+          className="grid gap-[3px] items-center mb-1"
+          style={{
+            gridTemplateColumns: `2.5rem repeat(${NUM_FRETS + 1}, minmax(2.65rem, 1fr))`,
+          }}
+        >
+          <span className="invisible">.</span>
+          {frets.map((fret) => (
+            <span
+              key={fret}
+              className="text-xs flex items-center justify-center font-semibold"
+              style={{ color: "var(--accent)" }}
+            >
+              {fret}
+            </span>
+          ))}
         </div>
-      ))}
+        {strings.map((si) => (
+          <div
+            key={si}
+            className="grid gap-[3px] items-center"
+            style={{
+              gridTemplateColumns: `2.5rem repeat(${NUM_FRETS + 1}, minmax(2.65rem, 1fr))`,
+            }}
+          >
+            <span
+              className="h-full text-xs font-bold flex items-center justify-center rounded"
+              style={{
+                background: "rgba(0, 0, 0, 0.25)",
+                color: "var(--accent)",
+              }}
+            >
+              {guitarStringNumberFromSi(si)}
+            </span>
+            {frets.map((fret) => {
+              const pc = pitchClassAt(si, fret);
+              return (
+                <FretCell
+                  key={fret}
+                  note={noteName(pc, useFlats)}
+                  isHighlighted={highlightSet.has(pc)}
+                  isRoot={pc === rootPc}
+                  onCellClick={() => onCellClick(pc)}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

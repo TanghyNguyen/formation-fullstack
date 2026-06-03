@@ -4,19 +4,29 @@ type FretCellProps = {
   note: string;
   isHighlighted: boolean;
   isRoot: boolean;
-  onClick: () => void;
+  onCellClick: () => void;
 };
 
 export default function FretCell({
   note,
   isHighlighted,
   isRoot,
-  onClick,
+  onCellClick,
 }: FretCellProps) {
   return (
     <button
-      className={`w-12 h-12 rounded-md ${isRoot ? "bg-amber-400 text-white" : isHighlighted ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-400"}`}
-      onClick={onClick}
+      style={{
+        background: isRoot
+          ? "var(--root)"
+          : isHighlighted
+            ? "var(--scale)"
+            : "rgba(20, 16, 12, 0.55)",
+        color: isRoot || isHighlighted ? "#0d1a2d" : "var(--muted)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: isRoot ? "0 0 0 2px rgba(255,107,74,0.5)" : undefined,
+      }}
+      className="w-full min-h-15 flex items-center justify-center shrink-0 rounded text-base font-semibold transition-colors duration-100 hover:brightness-125 cursor-pointer"
+      onClick={() => onCellClick()}
     >
       {note}
     </button>
