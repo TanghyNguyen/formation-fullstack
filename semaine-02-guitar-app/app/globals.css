@@ -36,4 +36,5 @@ body {
   color: var(--text);
   font-family: var(--font-geist-sans), Arial, sans-serif;
   min-height: 100vh;
+  background-attachment: fixed;
 }
