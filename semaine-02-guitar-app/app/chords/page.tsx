@@ -131,6 +131,7 @@ export default function ChordsPage() {
                 chordFrets={chordFrets}
                 rootPc={rootPc}
                 useFlats={useFlats}
+                chordType={chordType}
               />
             </div>
             <ChordDiagram

@@ -6,11 +6,14 @@ import {
   guitarStringNumberFromSi,
 } from "@/lib/tuning";
 import { noteName } from "@/lib/notes";
+import { chordDegree, DEGREE_STYLES, CHORD_INTERVALS } from "@/lib/caged";
+import type { ChordType } from "@/lib/caged";
 
 const NUM_FRETS = 16;
 
 type CagedFretboardProps = {
   chordFrets: readonly number[];
+  chordType: ChordType;
   rootPc: number;
   useFlats: boolean;
 };
@@ -19,12 +22,14 @@ export default function CagedFretboard({
   chordFrets,
   rootPc,
   useFlats,
+  chordType,
 }: CagedFretboardProps) {
   const strings = Array.from(
     { length: NUM_STRINGS },
     (_, i) => NUM_STRINGS - 1 - i,
   );
   const frets = Array.from({ length: NUM_FRETS + 1 }, (_, i) => i);
+  const degrees = CHORD_INTERVALS[chordType].map((i) => chordDegree(i, 0));
 
   return (
     <div className="w-full pb-2">
@@ -82,17 +87,16 @@ export default function CagedFretboard({
               const isActive = targetFret === fret;
               const pc = pitchClassAt(si, fret);
               const isRoot = isActive && pc === rootPc;
+              const degree = isActive ? chordDegree(pc, rootPc) : null;
 
               return (
                 <div
                   key={fret}
                   className="w-full min-h-15 flex items-center justify-center shrink-0 rounded text-base font-semibold"
                   style={{
-                    background: isRoot
-                      ? "var(--root)"
-                      : isActive
-                        ? "var(--chord)"
-                        : "rgba(20, 16, 12, 0.55)",
+                    background: degree
+                      ? DEGREE_STYLES[degree].color
+                      : "rgba(20, 16, 12, 0.55)",
                     color: isRoot || isActive ? "#0d1a2d" : "var(--muted)",
                     border: "1px solid rgba(255,255,255,0.06)",
                     opacity: isMuted ? 0.12 : 1,
@@ -105,6 +109,20 @@ export default function CagedFretboard({
                 </div>
               );
             })}
+          </div>
+        ))}
+      </div>
+      <div
+        className="flex flex-wrap gap-4 justify-center mt-3 text-sm"
+        style={{ color: "var(--muted)" }}
+      >
+        {degrees.map((deg) => (
+          <div key={deg} className="flex items-center gap-1.5">
+            <span
+              className="w-3 h-3 rounded-full shrink-0"
+              style={{ background: DEGREE_STYLES[deg].color }}
+            />
+            {DEGREE_STYLES[deg].label}
           </div>
         ))}
       </div>

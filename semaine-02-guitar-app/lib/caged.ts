@@ -130,3 +130,26 @@ export const LIBRARY_GROUPS: readonly {
   { title: "Triades", keys: ["M", "m", "dim", "aug", "sus2", "sus4"] },
   { title: "Septièmes", keys: ["7", "maj7", "m7"] },
 ];
+
+export type ChordDegree = "root" | "third" | "fifth" | "seventh" | "other";
+
+export function chordDegree(pc: number, rootPc: number): ChordDegree {
+  const interval = (pc - rootPc + 12) % 12;
+
+  if (interval === 0) return "root";
+  if (interval === 3 || interval === 4) return "third";
+  if (interval === 6 || interval === 7 || interval === 8) return "fifth";
+  if (interval === 10 || interval === 11) return "seventh";
+  return "other";
+}
+
+export const DEGREE_STYLES: Record<
+  ChordDegree,
+  { color: string; label: string }
+> = {
+  root: { color: "#ff6b4a", label: "Fondamentale" },
+  third: { color: "#6bcb77", label: "Tierce" },
+  fifth: { color: "#4d96ff", label: "Quinte" },
+  seventh: { color: "#b57bff", label: "Septième" },
+  other: { color: "#9a948a", label: "Autre" },
+};

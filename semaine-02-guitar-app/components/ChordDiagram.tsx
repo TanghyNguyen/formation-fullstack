@@ -3,6 +3,7 @@
 import { pitchClassAt } from "@/lib/tuning";
 import { noteName } from "@/lib/notes";
 import type { CagedPosition, ChordType } from "@/lib/caged";
+import { chordDegree, DEGREE_STYLES } from "@/lib/caged";
 
 type ChordDiagramProps = {
   chordFrets: readonly number[];
@@ -42,9 +43,7 @@ export default function ChordDiagram({
   const hiFret = pf.length ? Math.max(...pf) : 0;
 
   const hasOpen = chordFrets.some((f) => f === 0);
-  const barreF = hasOpen
-    ? -1
-    : Math.min(...chordFrets.filter((f) => f >= 0));
+  const barreF = hasOpen ? -1 : Math.min(...chordFrets.filter((f) => f >= 0));
   const barreStrings = chordFrets
     .map((f, si) => (f === barreF ? si : -1))
     .filter((si) => si >= 0);
@@ -130,7 +129,9 @@ export default function ChordDiagram({
           <rect
             x={pad + Math.min(...allPlayed) * strGap - 4}
             y={topY + (barreF - startFret) * fretH + fretH / 2 - 7}
-            width={(Math.max(...allPlayed) - Math.min(...allPlayed)) * strGap + 8}
+            width={
+              (Math.max(...allPlayed) - Math.min(...allPlayed)) * strGap + 8
+            }
             height={14}
             rx={7}
             fill="rgba(255,255,255,0.35)"
@@ -186,20 +187,15 @@ export default function ChordDiagram({
 
           const y = topY + (f - startFret) * fretH + fretH / 2;
           const pc = pitchClassAt(s, f);
-          const isRoot = pc === rootPc;
+          const degree = chordDegree(pc, rootPc);
 
           return (
             <g key={s}>
-              <circle
-                cx={x}
-                cy={y}
-                r={9}
-                fill={isRoot ? "#ff6b4a" : "#6bcb77"}
-              />
+              <circle cx={x} cy={y} r={9} fill={DEGREE_STYLES[degree].color} />
               <text
                 x={x}
                 y={y + 3.5}
-                fill={isRoot ? "#1a0805" : "#0d1f12"}
+                fill={"#0d1a2d"}
                 fontSize={8}
                 fontWeight={700}
                 fontFamily="var(--font-mono)"
@@ -218,8 +214,7 @@ export default function ChordDiagram({
           </>
         ) : (
           <>
-            Frettes{" "}
-            <strong style={{ color: "var(--text)" }}>{loFret}</strong> –{" "}
+            Frettes <strong style={{ color: "var(--text)" }}>{loFret}</strong> –{" "}
             <strong style={{ color: "var(--text)" }}>{hiFret}</strong>
           </>
         )}
