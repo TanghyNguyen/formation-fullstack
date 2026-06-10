@@ -1,5 +1,7 @@
 # Guitar App — Manche interactif
 
+[Live demo](https://formation-fullstack.vercel.app/)
+
 Application web pour visualiser **gammes** et **accords** sur le manche d'une guitare, avec mise en évidence des degrés (tonique, tierce, quinte, septième…).
 
 Migration en Next.js / React / TypeScript d'un projet original écrit en HTML/CSS/JS.
