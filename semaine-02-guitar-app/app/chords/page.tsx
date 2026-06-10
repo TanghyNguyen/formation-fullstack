@@ -102,7 +102,10 @@ export default function ChordsPage() {
             onChange={(e) => setUseFlats(e.target.checked)}
           />
         </label>
-        <div className="flex gap-1 mb-6">
+        <div
+          className="flex rounded-[10px] overflow-hidden border mb-6 w-full"
+          style={{ borderColor: "rgba(255,255,255,0.08)" }}
+        >
           {CAGED.map((pos) => {
             const isAvailable = Boolean(SHAPES[chordType]?.[pos]);
             return (
@@ -110,14 +113,18 @@ export default function ChordsPage() {
                 key={pos}
                 disabled={!isAvailable}
                 onClick={() => setCagedPos(pos)}
-                className="flex-1 py-2 rounded font-bold text-sm transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                className="flex-1 py-2.5 font-mono font-semibold text-base transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
                 style={{
                   background:
                     pos === cagedPos ? "var(--accent)" : "var(--wood-dark)",
                   color: pos === cagedPos ? "#1a1208" : "var(--muted)",
+                  borderRight: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
                 {pos}
+                <span className="block text-[0.6rem] font-normal opacity-70 font-sans mt-px">
+                  forme
+                </span>
               </button>
             );
           })}

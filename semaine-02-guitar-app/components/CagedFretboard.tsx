@@ -103,6 +103,7 @@ export default function CagedFretboard({
                     boxShadow: isRoot
                       ? "0 0 0 2px rgba(255,107,74,0.5)"
                       : undefined,
+                    borderLeft: fret === 0 ? "3px solid #f0ebe3" : undefined,
                   }}
                 >
                   {isActive ? noteName(pc, useFlats) : ""}

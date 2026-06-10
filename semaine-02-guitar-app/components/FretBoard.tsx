@@ -6,12 +6,16 @@ import {
 } from "@/lib/tuning";
 import { noteName } from "@/lib/notes";
 import FretCell from "./FretCell";
+import { chordDegree, DEGREE_STYLES } from "@/lib/caged";
+import { SCALES } from "@/lib/scales";
 
 type FretBoardProps = {
   highlightSet: Set<number>;
   rootPc: number;
   useFlats: boolean;
   onCellClick: (pc: number) => void;
+  showDegrees: boolean;
+  currentScale: string;
 };
 
 const NUM_FRETS = 16;
@@ -21,12 +25,17 @@ export default function FretBoard({
   rootPc,
   useFlats,
   onCellClick,
+  showDegrees,
+  currentScale,
 }: FretBoardProps) {
   const strings = Array.from(
     { length: NUM_STRINGS },
     (_, i) => NUM_STRINGS - 1 - i,
   );
   const frets = Array.from({ length: NUM_FRETS + 1 }, (_, i) => i);
+  const degrees = [
+    ...new Set(SCALES[currentScale].map((i) => chordDegree(i, 0))),
+  ];
 
   return (
     <div className="w-full pb-2">
@@ -77,6 +86,9 @@ export default function FretBoard({
             </span>
             {frets.map((fret) => {
               const pc = pitchClassAt(si, fret);
+              const degree = highlightSet.has(pc)
+                ? chordDegree(pc, rootPc)
+                : null;
               return (
                 <FretCell
                   key={fret}
@@ -84,12 +96,30 @@ export default function FretBoard({
                   isHighlighted={highlightSet.has(pc)}
                   isRoot={pc === rootPc}
                   onCellClick={() => onCellClick(pc)}
+                  showDegrees={showDegrees}
+                  degree={degree}
                 />
               );
             })}
           </div>
         ))}
       </div>
+      {showDegrees && (
+        <div
+          className="flex flex-wrap gap-4 justify-center mt-3 text-sm"
+          style={{ color: "var(--muted)" }}
+        >
+          {degrees.map((deg) => (
+            <div key={deg} className="flex items-center gap-1.5">
+              <span
+                className="w-3 h-3 rounded-full shrink-0"
+                style={{ background: DEGREE_STYLES[deg].color }}
+              />
+              {DEGREE_STYLES[deg].label}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

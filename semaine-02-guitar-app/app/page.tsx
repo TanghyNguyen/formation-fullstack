@@ -9,6 +9,7 @@ export default function HomePage() {
   const [currentScale, setCurrentScale] = useState("major");
   const [useFlats, setUseFlats] = useState(false);
   const highlightSet = pitchClassesFromRoot(rootPc, SCALES[currentScale]);
+  const [showDegrees, setShowDegrees] = useState(false);
   return (
     <main className="w-full max-w-5xl mx-auto min-h-screen py-10 px-4">
       <h1 className="text-3xl font-bold text-gray-200 dark:text-gray-100">
@@ -82,12 +83,25 @@ export default function HomePage() {
             checked={useFlats}
           />
         </label>
+        <label
+          className="flex flex-col gap-1 text-sm"
+          style={{ color: "var(--muted)" }}
+        >
+          Degrés
+          <input
+            type="checkbox"
+            checked={showDegrees}
+            onChange={(e) => setShowDegrees(e.target.checked)}
+          />
+        </label>
       </div>
       <FretBoard
         highlightSet={highlightSet}
         rootPc={rootPc}
         useFlats={useFlats}
         onCellClick={(pc) => setRootPc(pc)}
+        showDegrees={showDegrees}
+        currentScale={currentScale}
       />
     </main>
   );

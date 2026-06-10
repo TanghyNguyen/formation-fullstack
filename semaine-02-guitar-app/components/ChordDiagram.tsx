@@ -56,6 +56,8 @@ export default function ChordDiagram({
     barreF >= startFret &&
     barreF < startFret + numFrets;
 
+  const leftPad = startFret > 1 ? 14 : 0;
+
   return (
     <div
       className="shrink-0 flex flex-col items-center gap-2 rounded-lg py-4 px-4"
@@ -73,8 +75,20 @@ export default function ChordDiagram({
       <div className="text-xs" style={{ color: "var(--muted)" }}>
         Forme {cagedPos}
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block">
-        <rect x="0" y="0" width={W} height={H} fill="#2a1f17" rx="6" />
+      <svg
+        viewBox={`${-leftPad} 0 ${W + leftPad} ${H}`}
+        width={W}
+        height={H}
+        className="block"
+      >
+        <rect
+          x={-leftPad}
+          y="0"
+          width={W + leftPad}
+          height={H}
+          fill="#2a1f17"
+          rx="6"
+        />
 
         {startFret > 1 && (
           <text

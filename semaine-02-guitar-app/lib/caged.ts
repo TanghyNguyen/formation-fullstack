@@ -131,25 +131,61 @@ export const LIBRARY_GROUPS: readonly {
   { title: "Septièmes", keys: ["7", "maj7", "m7"] },
 ];
 
-export type ChordDegree = "root" | "third" | "fifth" | "seventh" | "other";
+export type ChordDegree =
+  | "1"
+  | "b2"
+  | "2"
+  | "b3"
+  | "3"
+  | "4"
+  | "b5"
+  | "5"
+  | "b6"
+  | "6"
+  | "b7"
+  | "7";
+
+const DEGREE_BY_INTERVAL: readonly ChordDegree[] = [
+  "1",
+  "b2",
+  "2",
+  "b3",
+  "3",
+  "4",
+  "b5",
+  "5",
+  "b6",
+  "6",
+  "b7",
+  "7",
+];
 
 export function chordDegree(pc: number, rootPc: number): ChordDegree {
   const interval = (pc - rootPc + 12) % 12;
-
-  if (interval === 0) return "root";
-  if (interval === 3 || interval === 4) return "third";
-  if (interval === 6 || interval === 7 || interval === 8) return "fifth";
-  if (interval === 10 || interval === 11) return "seventh";
-  return "other";
+  return DEGREE_BY_INTERVAL[interval];
 }
+
+const ROOT_COLOR = "#ff6b4a";
+const THIRD_COLOR = "#6bcb77";
+const FOURTH_COLOR = "#4d96ff";
+const FIFTH_COLOR = "#e8c84b";
+const SEVENTH_COLOR = "#b57bff";
+const SOFT_COLOR = "#9a948a";
 
 export const DEGREE_STYLES: Record<
   ChordDegree,
   { color: string; label: string }
 > = {
-  root: { color: "#ff6b4a", label: "Fondamentale" },
-  third: { color: "#6bcb77", label: "Tierce" },
-  fifth: { color: "#4d96ff", label: "Quinte" },
-  seventh: { color: "#b57bff", label: "Septième" },
-  other: { color: "#9a948a", label: "Autre" },
+  "1": { color: ROOT_COLOR, label: "Tonique" },
+  b2: { color: SOFT_COLOR, label: "Seconde mineure" },
+  "2": { color: SOFT_COLOR, label: "Seconde majeure" },
+  b3: { color: THIRD_COLOR, label: "Tierce mineure" },
+  "3": { color: THIRD_COLOR, label: "Tierce majeure" },
+  "4": { color: FOURTH_COLOR, label: "Quarte juste" },
+  b5: { color: SOFT_COLOR, label: "Triton" },
+  "5": { color: FIFTH_COLOR, label: "Quinte juste" },
+  b6: { color: SOFT_COLOR, label: "Sixte mineure" },
+  "6": { color: SOFT_COLOR, label: "Sixte majeure" },
+  b7: { color: SEVENTH_COLOR, label: "Septième mineure" },
+  "7": { color: SEVENTH_COLOR, label: "Septième majeure" },
 };

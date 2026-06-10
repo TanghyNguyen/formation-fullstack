@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,34 +29,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <nav
-          className="px-6 py-0 flex h-15"
-          style={{
-            background: "var(--panel)",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          <Link
-            href="/"
-            className="inline-flex items-center px-5 py-3 text-base font-semibold transition-colors"
-            style={{
-              color: "var(--accent)",
-              borderBottom: "2px solid var(--accent)",
-            }}
-          >
-            Gammes
-          </Link>
-          <Link
-            href="/chords"
-            className="inline-flex items-center px-5 py-3 text-sm font-semibold transition-colors"
-            style={{
-              color: "var(--muted)",
-              borderBottom: "2px solid transparent",
-            }}
-          >
-            Accords
-          </Link>
-        </nav>
+        <Navbar />
         {children}
       </body>
     </html>
