@@ -23,7 +23,7 @@ export default function HomePage() {
         }}
       >
         <label
-          className="flex flex-col gap-1 text-sm"
+          className="flex flex-col gap-1 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
           Fondamentale
@@ -45,7 +45,7 @@ export default function HomePage() {
           </select>
         </label>
         <label
-          className="flex flex-col gap-1 text-sm"
+          className="flex flex-col gap-1 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
           Gamme
@@ -67,7 +67,7 @@ export default function HomePage() {
           </select>
         </label>
         <label
-          className="flex flex-col gap-1 text-sm"
+          className="flex flex-row items-center gap-2 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
           Bémols
@@ -78,13 +78,12 @@ export default function HomePage() {
               color: "var(--text)",
               border: "1px solid rgba(255,255,255,0.12)",
             }}
-            className="rounded-md px-3 py-8 text-sm"
             onChange={(e) => setUseFlats(e.target.checked)}
             checked={useFlats}
           />
         </label>
         <label
-          className="flex flex-col gap-1 text-sm"
+          className="flex flex-row items-center gap-2 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
           Degrés

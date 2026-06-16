@@ -48,10 +48,10 @@ export default function FretBoard({
           boxShadow:
             "inset 0 2px 16px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.35)",
         }}
-        className="flex flex-col gap-1 w-full"
+        className="overflow-x-auto flex flex-col gap-1"
       >
         <div
-          className="grid gap-[3px] items-center mb-1"
+          className="grid gap-1 items-center"
           style={{
             gridTemplateColumns: `2.5rem repeat(${NUM_FRETS + 1}, minmax(2.65rem, 1fr))`,
           }}
@@ -70,7 +70,7 @@ export default function FretBoard({
         {strings.map((si) => (
           <div
             key={si}
-            className="grid gap-[3px] items-center"
+            className="grid gap-1 items-center"
             style={{
               gridTemplateColumns: `2.5rem repeat(${NUM_FRETS + 1}, minmax(2.65rem, 1fr))`,
             }}

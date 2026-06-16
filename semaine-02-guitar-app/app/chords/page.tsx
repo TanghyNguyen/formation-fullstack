@@ -48,7 +48,7 @@ export default function ChordsPage() {
         }}
       >
         <label
-          className="flex flex-col gap-1 text-sm"
+          className="flex flex-col gap-1 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
           Fondamentale
@@ -70,7 +70,7 @@ export default function ChordsPage() {
           </select>
         </label>
         <label
-          className="flex flex-col gap-1 text-sm"
+          className="flex flex-col gap-1 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
           Type d&apos;accord
@@ -92,7 +92,7 @@ export default function ChordsPage() {
           </select>
         </label>
         <label
-          className="flex flex-col gap-1 text-sm"
+          className="flex flex-row items-center gap-2 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
           Bémols
@@ -102,38 +102,38 @@ export default function ChordsPage() {
             onChange={(e) => setUseFlats(e.target.checked)}
           />
         </label>
-        <div
-          className="flex rounded-[10px] overflow-hidden border mb-6 w-full"
-          style={{ borderColor: "rgba(255,255,255,0.08)" }}
-        >
-          {CAGED.map((pos) => {
-            const isAvailable = Boolean(SHAPES[chordType]?.[pos]);
-            return (
-              <button
-                key={pos}
-                disabled={!isAvailable}
-                onClick={() => setCagedPos(pos)}
-                className="flex-1 py-2.5 font-mono font-semibold text-base transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
-                style={{
-                  background:
-                    pos === cagedPos ? "var(--accent)" : "var(--wood-dark)",
-                  color: pos === cagedPos ? "#1a1208" : "var(--muted)",
-                  borderRight: "1px solid rgba(255,255,255,0.06)",
-                }}
-              >
-                {pos}
-                <span className="block text-[0.6rem] font-normal opacity-70 font-sans mt-px">
-                  forme
-                </span>
-              </button>
-            );
-          })}
-        </div>
       </div>
-      <div className="flex flex-wrap gap-4 items-start">
+      <div
+        className="flex rounded-[10px] overflow-hidden border mb-6 w-full"
+        style={{ borderColor: "rgba(255,255,255,0.08)" }}
+      >
+        {CAGED.map((pos) => {
+          const isAvailable = Boolean(SHAPES[chordType]?.[pos]);
+          return (
+            <button
+              key={pos}
+              disabled={!isAvailable}
+              onClick={() => setCagedPos(pos)}
+              className="flex-1 py-2.5 font-mono font-semibold text-base transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+              style={{
+                background:
+                  pos === cagedPos ? "var(--accent)" : "var(--wood-dark)",
+                color: pos === cagedPos ? "#1a1208" : "var(--muted)",
+                borderRight: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {pos}
+              <span className="block text-[0.6rem] font-normal opacity-70 font-sans mt-px">
+                forme
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-col lg:flex-row gap-4 items-start">
         {chordFrets ? (
           <>
-            <div className="flex-1 min-w-0 overflow-x-auto">
+            <div className="w-full overflow-x-auto lg:flex-1 lg:min-w-0">
               <CagedFretboard
                 chordFrets={chordFrets}
                 rootPc={rootPc}

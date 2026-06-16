@@ -38,7 +38,7 @@ export default function FretCell({
             ? "0 0 0 2px rgba(255,107,74,0.5)"
             : undefined,
       }}
-      className="w-full min-h-15 flex items-center justify-center shrink-0 rounded text-base font-semibold transition-colors duration-100 hover:brightness-125 cursor-pointer"
+      className="w-full min-h-15 flex items-center justify-center shrink-0 rounded-md text-base font-semibold transition-colors duration-100 hover:brightness-125 cursor-pointer"
       onClick={() => onCellClick()}
     >
       {note}
