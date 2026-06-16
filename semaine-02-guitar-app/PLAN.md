@@ -29,12 +29,13 @@ Un livrable **déployé** à chaque palier — jamais plusieurs features empilé
 - [x] Mettre à jour le README avec le lien `[Live demo]`
 - Concepts : monorepo sur Vercel, build prod vs dev, déploiements immuables, rollback via alias, Deployment Protection
 
-### Session A2 — Neon + Prisma branchés
-- [ ] Créer un compte Neon, une base, récupérer `DATABASE_URL`
-- [ ] `.env` (jamais commité) + variable sur Vercel
-- [ ] Installer Prisma, `prisma init`, premier modèle bidon, `prisma db push`
-- [ ] Ouvrir Prisma Studio pour voir la base
-- Concepts : ORM, schéma, migration vs push, variables d'environnement, secrets
+### Session A2 — Neon + Prisma branchés ✅
+- [x] Créer un compte Neon, une base, récupérer `DATABASE_URL`
+- [x] `.env` (jamais commité) + variable sur Vercel (à faire au deploy full-stack)
+- [x] Installer Prisma, `prisma init`, premier modèle bidon, `prisma db push`
+- [x] Ouvrir Prisma Studio pour voir la base
+- [x] `lib/prisma.ts` — singleton client + adapter Postgres
+- Concepts : ORM, schéma, migration vs push, variables d'environnement, secrets, clé primaire, UTC
 
 ---
 

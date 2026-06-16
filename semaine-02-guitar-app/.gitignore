@@ -36,6 +36,14 @@ yarn-error.log*
 # vercel
 .vercel
 
+# playwright mcp screenshots
+.playwright-mcp/
+
+# prisma generated client
+/app/generated
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
