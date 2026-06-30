@@ -1,40 +1,53 @@
-"use client";
+import { auth } from "@/auth";
+import { signInWithGoogle, signOutAction } from "@/app/actions/auth";
+import NavbarLinks from "@/components/NavbarLinks";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-export default function Navbar() {
-  const pathname = usePathname();
-  const links = [
-    { href: "/", label: "Gammes" },
-    { href: "/chords", label: "Accords" },
-  ];
+export default async function Navbar() {
+  const session = await auth();
   return (
     <nav
-      className="px-6 py-0 flex h-15"
+      className="px-6 py-0 flex h-15 items-center justify-between"
       style={{
         background: "var(--panel)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
       }}
     >
-      {links.map((link) => {
-        const isActive = pathname === link.href;
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="inline-flex items-center px-5 py-3 text-sm font-semibold transition-colors"
+      <NavbarLinks />
+      {session?.user ? (
+        <div className="flex items-center gap-3 shrink-0">
+          <span
+            className="text-sm font-medium"
+            style={{ color: "var(--muted)" }}
+          >
+            {session.user.name}
+          </span>
+          <form action={signOutAction}>
+            <button
+              type="submit"
+              className="text-sm font-semibold px-3 py-1.5 rounded-md transition-colors"
+              style={{
+                color: "var(--accent)",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}
+            >
+              Se déconnecter
+            </button>
+          </form>
+        </div>
+      ) : (
+        <form action={signInWithGoogle}>
+          <button
+            type="submit"
+            className="text-sm font-semibold px-3 py-1.5 rounded-md transition-colors"
             style={{
-              color: isActive ? "var(--accent)" : "var(--muted)",
-              borderBottom: isActive
-                ? "2px solid var(--accent)"
-                : "2px solid transparent",
+              color: "var(--accent)",
+              border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            {link.label}
-          </Link>
-        );
-      })}
+            Se connecter
+          </button>
+        </form>
+      )}
     </nav>
   );
 }
