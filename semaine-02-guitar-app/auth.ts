@@ -11,5 +11,6 @@ export const {
 } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "database" },
+  trustHost: true,
   providers: [Google],
 });
