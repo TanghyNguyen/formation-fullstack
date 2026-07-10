@@ -38,3 +38,10 @@ body {
   min-height: 100vh;
   background-attachment: fixed;
 }
+
+button:not(:disabled),
+a,
+select,
+input[type="checkbox"] {
+  cursor: pointer;
+}
