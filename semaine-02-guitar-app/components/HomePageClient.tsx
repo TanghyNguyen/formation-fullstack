@@ -25,7 +25,10 @@ export default function HomePageClient({
   const [showDegrees, setShowDegrees] = useState(true);
   return (
     <main className="w-full max-w-5xl mx-auto min-h-screen py-10 px-4">
-      <h1 className="text-3xl font-bold text-gray-200 dark:text-gray-100">
+      <h1
+        className="text-3xl font-bold mb-2"
+        style={{ color: "var(--accent)" }}
+      >
         Guitar App
       </h1>
       <div
