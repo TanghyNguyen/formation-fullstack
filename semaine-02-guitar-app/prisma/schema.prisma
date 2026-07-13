@@ -70,6 +70,7 @@ model Preset {
   rootPc Int
   scaleOrChord String
   type String
+  cagedPos String?
   createdAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

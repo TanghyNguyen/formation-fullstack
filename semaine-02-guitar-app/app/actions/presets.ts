@@ -15,6 +15,7 @@ export async function createPreset(formData: FormData) {
   const rootPc = formData.get("rootPc") as string;
   const scaleOrChord = formData.get("scaleOrChord") as string;
   const type = formData.get("type") as string;
+  const cagedPos = formData.get("cagedPos") as string | null;
   await prisma.preset.create({
     data: {
       userId,
@@ -22,9 +23,11 @@ export async function createPreset(formData: FormData) {
       rootPc: parseInt(rootPc),
       scaleOrChord,
       type,
+      cagedPos: cagedPos || null,
     },
   });
   revalidatePath("/");
+  revalidatePath("/chords");
 }
 
 export async function deletePreset(presetId: string) {
@@ -40,4 +43,5 @@ export async function deletePreset(presetId: string) {
     },
   });
   revalidatePath("/");
+  revalidatePath("/chords");
 }

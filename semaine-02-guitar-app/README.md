@@ -1,10 +1,10 @@
-# Guitar App — Manche interactif
+# Guitar App — Manche interactif full-stack
 
 [Live demo](https://formation-fullstack.vercel.app/)
 
-Application web pour visualiser **gammes** et **accords** sur le manche d'une guitare, avec mise en évidence des degrés (tonique, tierce, quinte, septième…).
+Application web pour visualiser **gammes** et **accords** sur le manche d'une guitare, avec mise en évidence des degrés (tonique, tierce, quinte, septième…). Les utilisateurs connectés peuvent **sauvegarder leurs configurations favorites** (gammes et accords) en base de données.
 
-Migration en Next.js / React / TypeScript d'un projet original écrit en HTML/CSS/JS.
+Migration en Next.js / React / TypeScript d'un projet original écrit en HTML/CSS/JS, puis extension full-stack (Neon, Prisma, Auth.js).
 
 ## Fonctionnalités
 
@@ -15,6 +15,7 @@ Migration en Next.js / React / TypeScript d'un projet original écrit en HTML/CS
 - Clic sur une case pour définir la fondamentale
 - Bascule **dièses / bémols**
 - Option **Degrés** : colore chaque note selon sa fonction, avec légende
+- **Presets** (utilisateur connecté) : sauvegarder, charger et supprimer ses gammes favorites
 
 ### Page Accords (CAGED)
 
@@ -24,52 +25,97 @@ Migration en Next.js / React / TypeScript d'un projet original écrit en HTML/CS
 - **Diagramme d'accord** en SVG : fenêtre de frettes dynamique, sillet, barré, marqueurs
 - **Bibliothèque d'accords** cliquable avec formules d'intervalles
 - Code couleur par degré partagé avec la page Gammes
+- **Presets** (utilisateur connecté) : sauvegarder, charger et supprimer ses accords favorites
+
+### Authentification
+
+- Connexion / déconnexion via **Google OAuth**
+- Session persistée en base (Auth.js + Prisma Adapter)
+- Données isolées par utilisateur (`userId` sur chaque preset)
 
 ## Stack technique
 
-- **Next.js 16** (App Router)
-- **React 19**
-- **TypeScript** (strict)
-- **Tailwind CSS v4**
+| Couche | Technologie |
+|---|---|
+| Framework | **Next.js 16** (App Router) |
+| UI | **React 19**, **Tailwind CSS v4** |
+| Langage | **TypeScript** (strict) |
+| Base de données | **Neon** (Postgres serverless) |
+| ORM | **Prisma 7** |
+| Auth | **Auth.js v5** (next-auth beta) + Google OAuth |
+| Déploiement | **Vercel** |
 
 ## Architecture
 
 ```
 app/
-  layout.tsx        Layout racine + navbar
-  page.tsx          Page Gammes
-  chords/page.tsx   Page Accords (CAGED)
-  globals.css       Thème (variables CSS, fond dégradé)
+  layout.tsx              Layout racine + navbar
+  page.tsx                Page Gammes (Server Component)
+  chords/page.tsx         Page Accords (Server Component)
+  actions/
+    auth.ts               signInWithGoogle, signOutAction
+    presets.ts            createPreset, deletePreset
+  api/auth/[...nextauth]/ Server route Auth.js
 components/
-  Navbar.tsx        Navigation avec lien actif (usePathname)
-  FretBoard.tsx     Manche des gammes
-  FretCell.tsx      Case individuelle
-  CagedFretboard.tsx  Manche des accords
-  ChordDiagram.tsx  Diagramme d'accord SVG
+  Navbar.tsx              Session + boutons auth (Server)
+  NavbarLinks.tsx         Liens actifs (Client)
+  HomePageClient.tsx      UI gammes + presets (Client)
+  ChordsPageClient.tsx    UI accords + presets (Client)
+  FretBoard.tsx           Manche des gammes
+  CagedFretboard.tsx      Manche des accords
+  ChordDiagram.tsx        Diagramme d'accord SVG
 lib/
-  tuning.ts         Accordage, pitch classes
-  notes.ts          Noms de notes (dièses / bémols)
-  scales.ts         Définition des gammes
-  chords.ts         Bibliothèque d'accords
-  caged.ts          Formes CAGED, calcul des frettes, degrés
+  prisma.ts               Singleton Prisma + adapter Postgres
+  scales.ts, caged.ts     Logique musicale
+prisma/
+  schema.prisma           User, Session, Preset…
+auth.ts                   Config Auth.js
 ```
 
-## Démarrage
+## Démarrage local
+
+### Prérequis
+
+- Node.js 20+
+- Compte [Neon](https://neon.tech) (base Postgres)
+- Identifiants OAuth Google ([Google Cloud Console](https://console.cloud.google.com))
+
+### Installation
 
 ```bash
-npm install
-npm run dev
+pnpm install
+cp .env.example .env   # puis remplir les variables
+pnpm prisma db push      # synchroniser le schéma
+pnpm dev
 ```
 
 Ouvrir [http://localhost:3000](http://localhost:3000).
 
+### Variables d'environnement
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | URL de connexion Neon Postgres |
+| `AUTH_SECRET` | Secret session (`openssl rand -base64 32`) |
+| `AUTH_URL` | URL de l'app (`http://localhost:3000` en local) |
+| `AUTH_GOOGLE_ID` | Client ID OAuth Google |
+| `AUTH_GOOGLE_SECRET` | Client Secret OAuth Google |
+
+Redirect URI Google en local : `http://localhost:3000/api/auth/callback/google`
+
 ## Scripts
 
-- `npm run dev` — serveur de développement
-- `npm run build` — build de production
-- `npm run start` — serveur de production
-- `npm run lint` — vérification ESLint
+- `pnpm dev` — serveur de développement
+- `pnpm build` — build de production
+- `pnpm start` — serveur de production
+- `pnpm lint` — vérification ESLint
+
+## Déploiement (Vercel)
+
+- **Root Directory** : `semaine-02-guitar-app` (monorepo)
+- Configurer les 5 variables d'environnement en **Production**
+- Redirect URI Google : `https://formation-fullstack.vercel.app/api/auth/callback/google`
 
 ---
 
-Projet réalisé dans le cadre d'une formation full-stack (semaine 02).
+Projet réalisé dans le cadre d'une formation full-stack — Phase 2 (Next.js moderne + base + auth + presets).

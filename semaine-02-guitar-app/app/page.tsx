@@ -6,7 +6,7 @@ export default async function HomePage() {
   const session = await auth();
   const presets = session?.user?.id
     ? await prisma.preset.findMany({
-        where: { userId: session.user.id },
+        where: { userId: session.user.id, type: "scale" },
         orderBy: { createdAt: "desc" },
       })
     : [];
