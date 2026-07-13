@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
 import {
   CHORD_ORDER,
@@ -15,6 +15,7 @@ import {
 } from "@/lib/caged";
 import CagedFretboard from "@/components/CagedFretboard";
 import ChordDiagram from "@/components/ChordDiagram";
+import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
 
 export default function ChordsPageClient({
@@ -35,6 +36,7 @@ export default function ChordsPageClient({
   const [chordType, setChordType] = useState<ChordType>("M");
   const [cagedPos, setCagedPos] = useState<CagedPosition>("E");
   const [useFlats, setUseFlats] = useState(false);
+  const [isDeleting, startDelete] = useTransition();
 
   const shape = SHAPES[chordType]?.[cagedPos];
   const chordFrets = shape ? computeFrets(rootPc, shape) : null;
@@ -154,8 +156,7 @@ export default function ChordsPageClient({
             <input type="hidden" name="scaleOrChord" value={chordType} />
             <input type="hidden" name="cagedPos" value={cagedPos} />
             <input type="hidden" name="type" value="chord" />
-            <button
-              type="submit"
+            <SubmitButton
               className="text-sm font-semibold px-3 py-2 rounded-md"
               style={{
                 color: "var(--accent)",
@@ -163,7 +164,7 @@ export default function ChordsPageClient({
               }}
             >
               Sauvegarder
-            </button>
+            </SubmitButton>
           </form>
         ) : (
           <p className="text-sm" style={{ color: "var(--muted)" }}>
@@ -258,18 +259,23 @@ export default function ChordsPageClient({
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
+                  disabled={isDeleting}
+                  onClick={() => {
                     if (!confirm(`Supprimer « ${preset.name} » ?`)) return;
-                    await deletePreset(preset.id);
+                    startDelete(async () => {
+                      await deletePreset(preset.id);
+                    });
                   }}
                   className="shrink-0 text-sm font-semibold px-3 py-2 rounded-md"
                   style={{
                     color: "var(--root)",
                     border: "1px solid rgba(255,255,255,0.15)",
+                    opacity: isDeleting ? 0.6 : 1,
+                    cursor: isDeleting ? "wait" : undefined,
                   }}
                   aria-label={`Supprimer ${preset.name}`}
                 >
-                  Supprimer
+                  {isDeleting ? "…" : "Supprimer"}
                 </button>
               </li>
             ))}

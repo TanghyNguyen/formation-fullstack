@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { SCALES, SCALE_LABELS, pitchClassesFromRoot } from "@/lib/scales";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
 import FretBoard from "@/components/FretBoard";
+import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
 
 export default function HomePageClient({
@@ -23,6 +24,7 @@ export default function HomePageClient({
   const [useFlats, setUseFlats] = useState(false);
   const highlightSet = pitchClassesFromRoot(rootPc, SCALES[currentScale]);
   const [showDegrees, setShowDegrees] = useState(true);
+  const [isDeleting, startDelete] = useTransition();
   return (
     <main className="w-full max-w-5xl mx-auto min-h-screen py-10 px-4">
       <h1
@@ -134,8 +136,7 @@ export default function HomePageClient({
             <input type="hidden" name="rootPc" value={rootPc} />
             <input type="hidden" name="scaleOrChord" value={currentScale} />
             <input type="hidden" name="type" value="scale" />
-            <button
-              type="submit"
+            <SubmitButton
               className="text-sm font-semibold px-3 py-2 rounded-md"
               style={{
                 color: "var(--accent)",
@@ -143,7 +144,7 @@ export default function HomePageClient({
               }}
             >
               Sauvegarder
-            </button>
+            </SubmitButton>
           </form>
         ) : (
           <p className="text-sm" style={{ color: "var(--muted)" }}>
@@ -195,18 +196,23 @@ export default function HomePageClient({
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
+                  disabled={isDeleting}
+                  onClick={() => {
                     if (!confirm(`Supprimer « ${preset.name} » ?`)) return;
-                    await deletePreset(preset.id);
+                    startDelete(async () => {
+                      await deletePreset(preset.id);
+                    });
                   }}
                   className="shrink-0 text-sm font-semibold px-3 py-2 rounded-md"
                   style={{
                     color: "var(--root)",
                     border: "1px solid rgba(255,255,255,0.15)",
+                    opacity: isDeleting ? 0.6 : 1,
+                    cursor: isDeleting ? "wait" : undefined,
                   }}
                   aria-label={`Supprimer ${preset.name}`}
                 >
-                  Supprimer
+                  {isDeleting ? "…" : "Supprimer"}
                 </button>
               </li>
             ))}

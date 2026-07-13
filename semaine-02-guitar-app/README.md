@@ -6,6 +6,16 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 
 Migration en Next.js / React / TypeScript d'un projet original écrit en HTML/CSS/JS, puis extension full-stack (Neon, Prisma, Auth.js).
 
+## Captures d'écran
+
+### Page Gammes — presets utilisateur
+
+![Page Gammes avec manche interactif et presets](docs/screenshots/gammes.png)
+
+### Page Accords — système CAGED
+
+![Page Accords avec forme CAGED et diagramme](docs/screenshots/accords.png)
+
 ## Fonctionnalités
 
 ### Page Gammes
@@ -61,6 +71,7 @@ components/
   NavbarLinks.tsx         Liens actifs (Client)
   HomePageClient.tsx      UI gammes + presets (Client)
   ChordsPageClient.tsx    UI accords + presets (Client)
+  SubmitButton.tsx        Bouton submit avec état pending (Client)
   FretBoard.tsx           Manche des gammes
   CagedFretboard.tsx      Manche des accords
   ChordDiagram.tsx        Diagramme d'accord SVG

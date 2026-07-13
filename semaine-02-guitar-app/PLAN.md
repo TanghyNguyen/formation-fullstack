@@ -8,7 +8,7 @@
 - **Base de données :** Neon (Postgres cloud, même base dev/prod)
 - **ORM :** Prisma
 - **Auth :** NextAuth / Auth.js, **provider Google OAuth**
-- **UI :** introduction de **shadcn/ui** au moment de l'UI auth + presets
+- **UI :** introduction de **shadcn/ui** au moment de l'UI auth + presets *(reporté — UI native suffisante pour Phase 2)*
 - **Feature full-stack visée :** sauvegarder / charger / supprimer des presets (gamme ou accord favori) par utilisateur
 - **Rythme :** ~30h/semaine → plan sur ~3-4 semaines
 - **Méthode :** micro-étapes (je code, le mentor valide), reformulation à chaque concept nouveau, lecture de la doc Next.js/Auth.js avant de coder (cette version de Next a des breaking changes)
@@ -19,7 +19,7 @@ Un livrable **déployé** à chaque palier — jamais plusieurs features empilé
 
 ---
 
-## Semaine A — Mise en prod + fondations DB
+## Semaine A — Mise en prod + fondations DB ✅
 
 **Livrable : URL live de la guitare + connexion à une vraie base.**
 
@@ -31,7 +31,7 @@ Un livrable **déployé** à chaque palier — jamais plusieurs features empilé
 
 ### Session A2 — Neon + Prisma branchés ✅
 - [x] Créer un compte Neon, une base, récupérer `DATABASE_URL`
-- [x] `.env` (jamais commité) + variable sur Vercel (à faire au deploy full-stack)
+- [x] `.env` (jamais commité) + variable sur Vercel
 - [x] Installer Prisma, `prisma init`, premier modèle bidon, `prisma db push`
 - [x] Ouvrir Prisma Studio pour voir la base
 - [x] `lib/prisma.ts` — singleton client + adapter Postgres
@@ -39,57 +39,58 @@ Un livrable **déployé** à chaque palier — jamais plusieurs features empilé
 
 ---
 
-## Semaine B — Authentification (NextAuth / Auth.js)
+## Semaine B — Authentification (NextAuth / Auth.js) ✅
 
 **Livrable : se connecter / se déconnecter, session visible.**
 
-### Session B1 — Schéma Prisma complet
-- [ ] Modèles NextAuth (`User`, `Account`, `Session`, `VerificationToken`) via l'adapter Prisma
+### Session B1 — Schéma Prisma complet ✅
+- [x] Modèles NextAuth (`User`, `Account`, `Session`, `VerificationToken`) via l'adapter Prisma
 - Concepts : relations 1-N, clés étrangères, rôle de l'adapter
 
-### Session B2 — NextAuth + provider Google
-- [ ] Config Auth.js (App Router), provider Google OAuth
-- [ ] Console Google Cloud : créer les identifiants OAuth, secrets en `.env` + Vercel
+### Session B2 — NextAuth + provider Google ✅
+- [x] Config Auth.js (App Router), provider Google OAuth
+- [x] Console Google Cloud : créer les identifiants OAuth, secrets en `.env` + Vercel
 - Concepts : OAuth (flux navigateur ↔ Google ↔ app), session, callback
 
-### Session B3 — UI connexion + lecture de session
-- [ ] Bouton « Se connecter / Se déconnecter » dans la Navbar
-- [ ] Lire la session côté Server Component
-- [ ] Introduction shadcn/ui (Button, Dropdown)
+### Session B3 — UI connexion + lecture de session ✅
+- [x] Bouton « Se connecter / Se déconnecter » dans la Navbar
+- [x] Lire la session côté Server Component
+- [ ] Introduction shadcn/ui (Button, Dropdown) — reporté Phase 3
 - Concepts : session serveur vs client, route protégée
 
 ---
 
-## Semaine C — Feature presets (le vrai full-stack)
+## Semaine C — Feature presets (le vrai full-stack) ✅
 
 **Livrable : sauvegarder, lister, charger, supprimer ses presets.**
 
-### Session C1 — Modèle `Preset` + écriture
-- [ ] Modèle `Preset { id, userId, name, rootPc, scaleOrChord, type, createdAt }`
-- [ ] Server Action `createPreset(formData)` → insertion liée au `userId`
+### Session C1 — Modèle `Preset` + écriture ✅
+- [x] Modèle `Preset { id, userId, name, rootPc, scaleOrChord, type, cagedPos?, createdAt }`
+- [x] Server Action `createPreset(formData)` → insertion liée au `userId`
 - Concepts : Server Actions, mutation, `revalidatePath`
 
-### Session C2 — Lecture + affichage
-- [ ] `prisma.preset.findMany({ where: { userId } })` côté serveur
-- [ ] Liste des presets de l'utilisateur
+### Session C2 — Lecture + affichage ✅
+- [x] `prisma.preset.findMany({ where: { userId } })` côté serveur
+- [x] Liste des presets de l'utilisateur (filtrée par `type` : scale / chord)
 - Concepts : requête filtrée par utilisateur, ownership des données
 
-### Session C3 — Charger + supprimer + brancher au manche
-- [ ] Cliquer un preset → applique `rootPc` + gamme/accord au `FretBoard`
-- [ ] Supprimer un preset (Server Action + confirmation)
-- [ ] UI form « Sauvegarder » (shadcn Dialog / Input)
+### Session C3 — Charger + supprimer + brancher au manche ✅
+- [x] Cliquer un preset → applique `rootPc` + gamme/accord au manche (+ position CAGED)
+- [x] Supprimer un preset (Server Action + confirmation)
+- [x] UI form « Sauvegarder »
 - Concepts : remontée d'état client ↔ données serveur, suppression sécurisée
 
 ---
 
-## Semaine D — Déploiement full-stack + finition portfolio
+## Semaine D — Déploiement full-stack + finition portfolio ✅
 
 **Livrable : app full-stack en prod, README pro, prête à montrer.**
 
-- [ ] Déploiement complet : Neon prod + `DATABASE_URL` + secrets NextAuth/Google sur Vercel
-- [ ] Tester le flux entier en prod (login → save → reload → presets persistés)
-- [ ] README pro : stack, features full-stack, captures, URL live
-- [ ] Nettoyage : gestion d'erreurs, états de chargement, `lib/chords.ts` orphelin (brancher ou retirer)
+- [x] Déploiement complet : Neon prod + `DATABASE_URL` + secrets NextAuth/Google sur Vercel
+- [x] Tester le flux entier en prod (login → save → reload → presets persistés)
+- [x] README pro : stack, features full-stack, captures, URL live
+- [x] Nettoyage : validation presets, états de chargement, suppression `lib/chords.ts` orphelin
+- [x] Rotation des secrets exposés dans le chat
 - [ ] Bilan Phase 2 → préparer la Phase 3 (Python / FastAPI / IA)
 
 ---
@@ -105,4 +106,4 @@ Un livrable **déployé** à chaque palier — jamais plusieurs features empilé
 
 ## Prochaine action
 
-Session A1 — déploiement de la guitare sur Vercel.
+**Phase 3** — API Python / FastAPI (ou feature IA) consommée par le front Next.js.
