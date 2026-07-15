@@ -7,7 +7,6 @@ import {
 import { noteName } from "@/lib/notes";
 import FretCell from "./FretCell";
 import { chordDegree, DEGREE_STYLES } from "@/lib/caged";
-import { SCALES } from "@/lib/scales";
 
 type FretBoardProps = {
   highlightSet: Set<number>;
@@ -15,7 +14,7 @@ type FretBoardProps = {
   useFlats: boolean;
   onCellClick: (pc: number) => void;
   showDegrees: boolean;
-  currentScale: string;
+  scaleIntervals: readonly number[];
 };
 
 const NUM_FRETS = 16;
@@ -26,7 +25,7 @@ export default function FretBoard({
   useFlats,
   onCellClick,
   showDegrees,
-  currentScale,
+  scaleIntervals,
 }: FretBoardProps) {
   const strings = Array.from(
     { length: NUM_STRINGS },
@@ -34,7 +33,7 @@ export default function FretBoard({
   );
   const frets = Array.from({ length: NUM_FRETS + 1 }, (_, i) => i);
   const degrees = [
-    ...new Set(SCALES[currentScale].map((i) => chordDegree(i, 0))),
+    ...new Set(scaleIntervals.map((i) => chordDegree(i, 0))),
   ];
 
   return (

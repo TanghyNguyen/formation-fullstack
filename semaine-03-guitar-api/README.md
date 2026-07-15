@@ -25,11 +25,15 @@ Ouvrir :
 - [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health) → `{"status":"ok"}`
 - [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) → Swagger UI (doc auto-générée)
 
-## Routes (Session E1)
+## Routes
 
 | Méthode | Route | Réponse |
 |---|---|---|
 | `GET` | `/health` | `{ "status": "ok" }` |
+| `GET` | `/scales` | Liste des gammes (`key`, `label`, `intervals`) |
+| `GET` | `/scales/{name}/notes?root_pc=0` | Pitch classes à surligner |
+
+[Live API](https://formation-fullstack-production.up.railway.app/health)
 
 ## Scripts utiles
 

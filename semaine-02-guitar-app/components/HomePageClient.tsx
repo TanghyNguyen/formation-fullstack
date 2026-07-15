@@ -1,6 +1,7 @@
 "use client";
-import { useState, useTransition } from "react";
-import { SCALES, SCALE_LABELS, pitchClassesFromRoot } from "@/lib/scales";
+import { useEffect, useState, useTransition } from "react";
+import type { ScaleInfo } from "@/lib/guitar-api";
+import { fetchScaleNotes } from "@/lib/guitar-api";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
 import FretBoard from "@/components/FretBoard";
 import SubmitButton from "@/components/SubmitButton";
@@ -9,6 +10,7 @@ import { createPreset, deletePreset } from "@/app/actions/presets";
 export default function HomePageClient({
   isLoggedIn,
   presets,
+  scales,
 }: {
   isLoggedIn: boolean;
   presets: {
@@ -18,13 +20,40 @@ export default function HomePageClient({
     scaleOrChord: string;
     type: string;
   }[];
+  scales: ScaleInfo[];
 }) {
-  const [rootPc, setRootPc] = useState(0); // C par défaut
-  const [currentScale, setCurrentScale] = useState("major");
+  const scaleLabels = Object.fromEntries(
+    scales.map((scale) => [scale.key, scale.label]),
+  );
+  const scaleIntervals = Object.fromEntries(
+    scales.map((scale) => [scale.key, scale.intervals]),
+  );
+  const [rootPc, setRootPc] = useState(0);
+  const [currentScale, setCurrentScale] = useState(scales[0]?.key ?? "major");
   const [useFlats, setUseFlats] = useState(false);
-  const highlightSet = pitchClassesFromRoot(rootPc, SCALES[currentScale]);
+  const [highlightSet, setHighlightSet] = useState<Set<number>>(new Set());
   const [showDegrees, setShowDegrees] = useState(true);
   const [isDeleting, startDelete] = useTransition();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchScaleNotes(currentScale, rootPc)
+      .then((pitchClasses) => {
+        if (!cancelled) {
+          setHighlightSet(new Set(pitchClasses));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHighlightSet(new Set());
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentScale, rootPc]);
   return (
     <main className="w-full max-w-5xl mx-auto min-h-screen py-10 px-4">
       <h1
@@ -77,9 +106,9 @@ export default function HomePageClient({
             onChange={(e) => setCurrentScale(e.target.value)}
             value={currentScale}
           >
-            {Object.keys(SCALES).map((scale) => (
-              <option key={scale} value={scale}>
-                {SCALE_LABELS[scale] ?? scale}
+            {scales.map((scale) => (
+              <option key={scale.key} value={scale.key}>
+                {scale.label}
               </option>
             ))}
           </select>
@@ -158,7 +187,7 @@ export default function HomePageClient({
         useFlats={useFlats}
         onCellClick={(pc) => setRootPc(pc)}
         showDegrees={showDegrees}
-        currentScale={currentScale}
+        scaleIntervals={scaleIntervals[currentScale] ?? []}
       />
       {isLoggedIn && presets.length > 0 && (
         <section className="mt-8">
@@ -192,7 +221,7 @@ export default function HomePageClient({
                   </span>
                   {" — "}
                   {NOTE_NAMES_SHARP[preset.rootPc]}{" "}
-                  {SCALE_LABELS[preset.scaleOrChord] ?? preset.scaleOrChord}
+                  {scaleLabels[preset.scaleOrChord] ?? preset.scaleOrChord}
                 </button>
                 <button
                   type="button"
