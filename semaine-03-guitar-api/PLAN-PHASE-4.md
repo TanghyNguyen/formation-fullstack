@@ -20,21 +20,22 @@ Page Gammes (Next.js)
 
 ## Semaine I — Recommandations rule-based
 
-### Session I1 — Endpoint + UI ✅ (démarré)
-- [x] `POST /recommend/chords { scale_key, root_pc }`
-- [x] Section « Accords suggérés » sur la page Gammes
-- [ ] Cliquer un accord suggéré → navigation vers `/chords` avec preset appliqué
+### Session I1 — Endpoint + UI ✅
+- [x] `POST /recommend/chords` → progressions IA (OpenAI)
+- [x] Section « Progressions d'accords (IA) » sur la page Gammes
+- [ ] Cliquer une progression → navigation vers `/chords`
 
 ### Session I2 — Affinage musical
 - [ ] Règles par mode (dorien, mixolydien, blues…)
 - [ ] Tests pytest dédiés `recommend.py`
 - [ ] Affichage labels français (Majeur, mineur…)
 
-## Semaine J — Option IA (bonus)
+## Semaine J — IA multi-fournisseurs
 
-- [ ] Intégration OpenAI / modèle local
-- [ ] Prompt contextuel : gamme + niveau + style
-- [ ] Fallback rule-based si API IA indisponible
+- [x] Ollama (local, gratuit)
+- [x] Groq (cloud gratuit, prod Railway) — voir `DEPLOY-GROQ.md`
+- [x] Fallback rule-based si quota dépassé
+- [ ] Cache des progressions pour limiter les appels
 
 ## Livrable final Phase 4
 

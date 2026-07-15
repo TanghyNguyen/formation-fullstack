@@ -1,6 +1,10 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 from scales import SCALES, SCALE_LABELS, pitch_classes_from_root
 from caged import (
@@ -11,7 +15,8 @@ from caged import (
     list_chord_types,
 )
 from degrees import DEGREE_STYLES, chord_degree
-from recommend import recommend_chords
+from recommend_ai import recommend_progressions_ai
+from recommend_fallback import recommend_progressions_fallback
 
 app = FastAPI(
     title="Guitar API",
@@ -139,8 +144,20 @@ def recommend_chords_for_scale(body: RecommendRequest):
             status_code=404, detail=f"Scale '{body.scale_key}' not found"
         )
 
-    return {
-        "scale_key": body.scale_key,
-        "root_pc": body.root_pc,
-        "recommendations": recommend_chords(body.scale_key, body.root_pc),
-    }
+    try:
+        return recommend_progressions_ai(body.scale_key, body.root_pc)
+    except RuntimeError as exc:
+        message = str(exc)
+        if os.getenv("OPENAI_FALLBACK", "true").lower() in {"1", "true", "yes"}:
+            fallback = recommend_progressions_fallback(body.scale_key, body.root_pc)
+            if fallback["progressions"]:
+                fallback["ai_error"] = message
+                return fallback
+        if "GROQ_API_KEY" in message or (
+            "OPENAI_API_KEY" in message and "invalid" not in message.lower()
+        ):
+            raise HTTPException(
+                status_code=503,
+                detail="AI API key is not configured on the API server",
+            ) from exc
+        raise HTTPException(status_code=502, detail=message) from exc

@@ -50,4 +50,10 @@ SCALE_LABELS: dict[str, str] = {
 
 
 def pitch_classes_from_root(root_pc: int, intervals: list[int]) -> list[int]:
+    """Pitch classes de la gamme (triées) — pour surligner le manche."""
     return sorted({(root_pc + interval) % 12 for interval in intervals})
+
+
+def scale_degrees_from_root(root_pc: int, intervals: list[int]) -> list[int]:
+    """Degrés diatoniques dans l'ordre (tonique en index 0) — pour les accords."""
+    return [(root_pc + interval) % 12 for interval in intervals]

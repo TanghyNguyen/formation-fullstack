@@ -34,7 +34,22 @@ export type ChordFretsResponse = {
 export type ChordRecommendation = {
   root_pc: number;
   chord_type: string;
-  scale_degree: number;
+  roman?: string;
+};
+
+export type ChordProgression = {
+  name: string;
+  description: string;
+  chords: ChordRecommendation[];
+};
+
+export type ChordProgressionsResponse = {
+  scale_key: string;
+  root_pc: number;
+  source: string;
+  model?: string;
+  ai_error?: string;
+  progressions: ChordProgression[];
 };
 
 function getApiUrl(): string {
@@ -132,10 +147,10 @@ export async function fetchDegreeStyles(): Promise<DegreeStyles> {
   return res.json();
 }
 
-export async function fetchChordRecommendations(
+export async function fetchChordProgressions(
   scaleKey: string,
   rootPc: number,
-): Promise<ChordRecommendation[]> {
+): Promise<ChordProgressionsResponse> {
   const res = await fetch(`${getApiUrl()}/recommend/chords`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -144,11 +159,9 @@ export async function fetchChordRecommendations(
   });
 
   if (!res.ok) {
-    throw new Error(`Failed to fetch recommendations: ${res.status}`);
+    const detail = await res.text();
+    throw new Error(`Failed to fetch progressions: ${res.status} ${detail}`);
   }
 
-  const data: {
-    recommendations: ChordRecommendation[];
-  } = await res.json();
-  return data.recommendations;
+  return res.json();
 }

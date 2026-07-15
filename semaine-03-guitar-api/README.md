@@ -33,9 +33,35 @@ uvicorn main:app --reload --port 8000
 | `GET` | `/chords/frets?root_pc=0&chord_type=M&position=E` | Doigté |
 | `GET` | `/degrees/styles` | Couleurs et labels des degrés |
 | `GET` | `/degrees/at?pc=4&root_pc=0` | Degré d'une note |
-| `POST` | `/recommend/chords` | Accords suggérés pour une gamme |
+| `POST` | `/recommend/chords` | Progressions d'accords générées par **OpenAI** |
 
-### Exemple recommandations
+### Configuration IA
+
+| Variable | Description |
+|---|---|
+| `AI_PROVIDER` | `ollama` (local, gratuit), `groq` (cloud gratuit), `openai` (payant) |
+| `OLLAMA_BASE_URL` | URL Ollama (défaut : `http://127.0.0.1:11434/v1`) |
+| `OLLAMA_MODEL` | Modèle Ollama (défaut : `llama3.1:8b`) |
+| `GROQ_API_KEY` | Clé gratuite [console.groq.com](https://console.groq.com) |
+| `OPENAI_API_KEY` | Clé OpenAI (optionnel, payant) |
+| `OPENAI_FALLBACK` | `true` = progressions rule-based si l'IA échoue |
+
+**Local gratuit (recommandé)** — Ollama tourne sur ton Mac, sans quota :
+
+```bash
+brew install ollama          # déjà installé chez toi
+ollama serve                   # terminal 1
+ollama pull llama3.1:8b         # ou un modèle déjà installé
+# dans .env : AI_PROVIDER=ollama
+```
+
+**Cloud gratuit** — Groq pour Railway (limites journalières, mais généreux) :
+
+```bash
+# .env Railway : AI_PROVIDER=groq + GROQ_API_KEY
+```
+
+### Exemple progressions IA
 
 ```bash
 curl -X POST "https://formation-fullstack-production.up.railway.app/recommend/chords" \
@@ -56,7 +82,9 @@ main.py        Routes FastAPI + CORS
 scales.py      Gammes et intervalles
 caged.py       Formes CAGED et calcul des frettes
 degrees.py     Degrés et styles couleur
-recommend.py   Recommandations d'accords (Phase 4)
+recommend_ai.py  Progressions IA (Ollama / Groq / OpenAI)
+llm_provider.py  Configuration fournisseur LLM
+recommend_fallback.py  Secours rule-based
 tests/         pytest
 ```
 
@@ -64,5 +92,17 @@ tests/         pytest
 
 - Root Directory : `semaine-03-guitar-api`
 - `Procfile` : `web: uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+### Prod IA (Groq)
+
+Voir **[DEPLOY-GROQ.md](./DEPLOY-GROQ.md)** pour la checklist complète.
+
+Variables minimales Railway :
+```
+AI_PROVIDER=groq
+GROQ_API_KEY=gsk_...
+GROQ_MODEL=llama-3.1-8b-instant
+OPENAI_FALLBACK=true
+```
 
 Voir `PLAN-PHASE-3.md` et `PLAN-PHASE-4.md` pour le suivi pédagogique.
