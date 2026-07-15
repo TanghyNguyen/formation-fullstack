@@ -7,13 +7,13 @@ CHORD_ORDER = ["M", "m", "7", "m7", "maj7", "dim", "aug", "sus2", "sus4"]
 CHORD_LABELS = {
     "M": "Majeur",
     "m": "Mineur",
-    "7": "7 (dom.)",
-    "m7": "m7",
-    "maj7": "maj7 (Δ7)",
+    "7": "7ème dominante",
+    "m7": "Mineur 7",
+    "maj7": "Majeur 7",
     "dim": "Diminué",
     "aug": "Augmenté",
-    "sus2": "sus2",
-    "sus4": "sus4",
+    "sus2": "Sus 2",
+    "sus4": "Sus 4",
 }
 
 CHORD_INTERVALS = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import type { ChordLibraryGroup, ChordTypeInfo } from "@/lib/guitar-api";
 import { fetchChordFrets } from "@/lib/guitar-api";
@@ -12,6 +12,49 @@ import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
 
 const CAGED: readonly CagedPosition[] = ["C", "A", "G", "E", "D"];
+
+function firstAvailablePosition(
+  type: string,
+  positionsByType: Record<string, string[]>,
+): CagedPosition {
+  const positions = positionsByType[type] ?? [];
+  return (positions.find((p) => CAGED.includes(p as CagedPosition)) ??
+    "E") as CagedPosition;
+}
+
+function chordParamsFromSearch(
+  searchParams: URLSearchParams,
+  intervalsByType: Record<string, number[]>,
+  positionsByType: Record<string, string[]>,
+  defaultType: ChordType,
+) {
+  const rootParam = searchParams.get("root_pc");
+  const typeParam = searchParams.get("chord_type");
+  if (rootParam === null && typeParam === null) {
+    return null;
+  }
+
+  let rootPc = 0;
+  if (rootParam !== null) {
+    const pc = Number.parseInt(rootParam, 10);
+    if (!Number.isNaN(pc) && pc >= 0 && pc <= 11) {
+      rootPc = pc;
+    }
+  }
+
+  const chordType =
+    typeParam && intervalsByType[typeParam]
+      ? (typeParam as ChordType)
+      : defaultType;
+  const cagedPos = firstAvailablePosition(chordType, positionsByType);
+
+  return {
+    key: `${rootParam ?? ""}-${typeParam ?? ""}`,
+    rootPc,
+    chordType,
+    cagedPos,
+  };
+}
 
 export default function ChordsPageClient({
   isLoggedIn,
@@ -42,66 +85,65 @@ export default function ChordsPageClient({
   const positionsByType = Object.fromEntries(
     chordTypes.map((chord) => [chord.key, chord.positions]),
   );
+  const defaultChordType = (chordTypes[0]?.key as ChordType) ?? "M";
+  const searchParams = useSearchParams();
 
-  const [rootPc, setRootPc] = useState(0);
-  const [chordType, setChordType] = useState<ChordType>(
-    (chordTypes[0]?.key as ChordType) ?? "M",
+  const urlParams = useMemo(
+    () =>
+      chordParamsFromSearch(
+        searchParams,
+        intervalsByType,
+        positionsByType,
+        defaultChordType,
+      ),
+    [searchParams, intervalsByType, positionsByType, defaultChordType],
   );
-  const [cagedPos, setCagedPos] = useState<CagedPosition>("E");
+
+  const [selection, setSelection] = useState({
+    rootPc: 0,
+    chordType: defaultChordType,
+    cagedPos: "E" as CagedPosition,
+  });
+  const [syncedUrlKey, setSyncedUrlKey] = useState<string | null>(null);
+
+  if (urlParams && urlParams.key !== syncedUrlKey) {
+    setSyncedUrlKey(urlParams.key);
+    setSelection({
+      rootPc: urlParams.rootPc,
+      chordType: urlParams.chordType,
+      cagedPos: urlParams.cagedPos,
+    });
+  }
+
+  const { rootPc, chordType, cagedPos } = selection;
   const [useFlats, setUseFlats] = useState(false);
   const [chordFrets, setChordFrets] = useState<number[] | null>(null);
   const [isDeleting, startDelete] = useTransition();
-  const searchParams = useSearchParams();
-
-  function firstAvailablePosition(type: string): CagedPosition {
-    const positions = positionsByType[type] ?? [];
-    return (positions.find((p) => CAGED.includes(p as CagedPosition)) ??
-      "E") as CagedPosition;
-  }
 
   function handleChordTypeChange(next: ChordType) {
-    setChordType(next);
     const positions = positionsByType[next] ?? [];
-    if (!positions.includes(cagedPos)) {
-      setCagedPos(firstAvailablePosition(next));
-    }
+    setSelection((current) => ({
+      rootPc: current.rootPc,
+      chordType: next,
+      cagedPos: positions.includes(current.cagedPos)
+        ? current.cagedPos
+        : firstAvailablePosition(next, positionsByType),
+    }));
   }
 
   function loadPreset(preset: (typeof presets)[number]) {
     const nextType = preset.scaleOrChord as ChordType;
-    setRootPc(preset.rootPc);
-    setChordType(nextType);
     const savedPos = preset.cagedPos as CagedPosition | null;
     const positions = positionsByType[nextType] ?? [];
-    if (savedPos && positions.includes(savedPos)) {
-      setCagedPos(savedPos);
-    } else {
-      setCagedPos(firstAvailablePosition(nextType));
-    }
+    setSelection({
+      rootPc: preset.rootPc,
+      chordType: nextType,
+      cagedPos:
+        savedPos && positions.includes(savedPos)
+          ? savedPos
+          : firstAvailablePosition(nextType, positionsByType),
+    });
   }
-
-  useEffect(() => {
-    const rootParam = searchParams.get("root_pc");
-    const typeParam = searchParams.get("chord_type");
-
-    if (rootParam !== null) {
-      const pc = Number.parseInt(rootParam, 10);
-      if (!Number.isNaN(pc) && pc >= 0 && pc <= 11) {
-        setRootPc(pc);
-      }
-    }
-
-    if (typeParam && intervalsByType[typeParam]) {
-      const nextType = typeParam as ChordType;
-      setChordType(nextType);
-      const positions = positionsByType[nextType] ?? [];
-      setCagedPos((current) =>
-        positions.includes(current)
-          ? current
-          : firstAvailablePosition(nextType),
-      );
-    }
-  }, [searchParams, intervalsByType, positionsByType]);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,7 +192,12 @@ export default function ChordsPageClient({
               border: "1px solid rgba(255,255,255,0.12)",
             }}
             className="rounded-md px-3 py-2 text-sm"
-            onChange={(e) => setRootPc(parseInt(e.target.value, 10))}
+            onChange={(e) =>
+              setSelection((current) => ({
+                ...current,
+                rootPc: Number.parseInt(e.target.value, 10),
+              }))
+            }
             value={rootPc}
           >
             {NOTE_NAMES_SHARP.map((note, index) => (
@@ -245,7 +292,9 @@ export default function ChordsPageClient({
             <button
               key={pos}
               disabled={!isAvailable}
-              onClick={() => setCagedPos(pos)}
+              onClick={() =>
+                setSelection((current) => ({ ...current, cagedPos: pos }))
+              }
               className="flex-1 py-2.5 font-mono font-semibold text-base transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
               style={{
                 background:
@@ -278,7 +327,7 @@ export default function ChordsPageClient({
               chordFrets={chordFrets}
               rootPc={rootPc}
               useFlats={useFlats}
-              chordType={chordType}
+              chordLabel={chordLabels[chordType] ?? chordType}
               cagedPos={cagedPos}
               degreeStyles={degreeStyles}
             />
@@ -362,15 +411,20 @@ export default function ChordsPageClient({
                 <button
                   key={key}
                   onClick={() => handleChordTypeChange(key as ChordType)}
-                  className="rounded-md px-3 py-2 text-sm flex flex-col gap-1"
+                  className="rounded-md px-3 py-2 text-sm flex flex-col gap-1 text-left"
                   style={{
-                    background: "var(--wood-dark)",
-                    color: "var(--text)",
+                    background:
+                      key === chordType ? "var(--accent)" : "var(--wood-dark)",
+                    color: key === chordType ? "#1a1208" : "var(--text)",
                     border: "1px solid rgba(255,255,255,0.12)",
                   }}
                 >
-                  <span>{key}</span>
-                  <span>{(intervalsByType[key] ?? []).join(", ")}</span>
+                  <span className="font-semibold">
+                    {chordLabels[key] ?? key}
+                  </span>
+                  <span className="text-xs opacity-70">
+                    {(intervalsByType[key] ?? []).join(", ")} semi-tons
+                  </span>
                 </button>
               ))}
             </div>

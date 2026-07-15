@@ -2,14 +2,14 @@
 
 import { pitchClassAt } from "@/lib/tuning";
 import { noteName } from "@/lib/notes";
-import type { CagedPosition, ChordType, DegreeStyles } from "@/lib/music-types";
+import type { CagedPosition, DegreeStyles } from "@/lib/music-types";
 import { chordDegree } from "@/lib/degrees";
 
 type ChordDiagramProps = {
   chordFrets: readonly number[];
   rootPc: number;
   useFlats: boolean;
-  chordType: ChordType;
+  chordLabel: string;
   cagedPos: CagedPosition;
   degreeStyles: DegreeStyles;
 };
@@ -18,7 +18,7 @@ export default function ChordDiagram({
   chordFrets,
   rootPc,
   useFlats,
-  chordType,
+  chordLabel,
   cagedPos,
   degreeStyles,
 }: ChordDiagramProps) {
@@ -37,8 +37,7 @@ export default function ChordDiagram({
   const numFrets = maxF <= 4 ? 4 : Math.max(4, maxF - startFret + 1);
   const H = topY + numFrets * fretH + 20;
 
-  const chordName =
-    noteName(rootPc, useFlats) + (chordType === "M" ? "" : chordType);
+  const chordName = `${noteName(rootPc, useFlats)} ${chordLabel}`;
 
   const pf = chordFrets.filter((f) => f >= 0);
   const loFret = pf.length ? Math.min(...pf) : 0;
