@@ -10,6 +10,25 @@ export type ScaleNotesResponse = {
   pitch_classes: number[];
 };
 
+export type ChordTypeInfo = {
+  key: string;
+  label: string;
+  intervals: number[];
+  positions: string[];
+};
+
+export type ChordLibraryGroup = {
+  title: string;
+  keys: string[];
+};
+
+export type ChordFretsResponse = {
+  root_pc: number;
+  chord_type: string;
+  position: string;
+  frets: number[];
+};
+
 function getApiUrl(): string {
   const url =
     process.env.GUITAR_API_URL ??
@@ -45,4 +64,50 @@ export async function fetchScaleNotes(
 
   const data: ScaleNotesResponse = await res.json();
   return data.pitch_classes;
+}
+
+export async function fetchChordTypes(): Promise<ChordTypeInfo[]> {
+  const res = await fetch(`${getApiUrl()}/chords/types`, {
+    next: { revalidate: 3600 },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch chord types: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function fetchChordLibrary(): Promise<ChordLibraryGroup[]> {
+  const res = await fetch(`${getApiUrl()}/chords/library`, {
+    next: { revalidate: 3600 },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch chord library: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function fetchChordFrets(
+  chordType: string,
+  position: string,
+  rootPc: number,
+): Promise<number[] | null> {
+  const res = await fetch(
+    `${getApiUrl()}/chords/frets?root_pc=${rootPc}&chord_type=${encodeURIComponent(chordType)}&position=${position}`,
+    { cache: "no-store" },
+  );
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch chord frets: ${res.status}`);
+  }
+
+  const data: ChordFretsResponse = await res.json();
+  return data.frets;
 }

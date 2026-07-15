@@ -1,26 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import type { ChordLibraryGroup, ChordTypeInfo } from "@/lib/guitar-api";
+import { fetchChordFrets } from "@/lib/guitar-api";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
-import {
-  CHORD_ORDER,
-  CHORD_LABELS,
-  CAGED,
-  SHAPES,
-  computeFrets,
-  LIBRARY_GROUPS,
-  CHORD_INTERVALS,
-  type ChordType,
-  type CagedPosition,
-} from "@/lib/caged";
+import type { CagedPosition, ChordType } from "@/lib/caged";
 import CagedFretboard from "@/components/CagedFretboard";
 import ChordDiagram from "@/components/ChordDiagram";
 import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
 
+const CAGED: readonly CagedPosition[] = ["C", "A", "G", "E", "D"];
+
 export default function ChordsPageClient({
   isLoggedIn,
   presets,
+  chordTypes,
+  libraryGroups,
 }: {
   isLoggedIn: boolean;
   presets: {
@@ -31,20 +27,39 @@ export default function ChordsPageClient({
     type: string;
     cagedPos: string | null;
   }[];
+  chordTypes: ChordTypeInfo[];
+  libraryGroups: ChordLibraryGroup[];
 }) {
+  const chordLabels = Object.fromEntries(
+    chordTypes.map((chord) => [chord.key, chord.label]),
+  );
+  const intervalsByType = Object.fromEntries(
+    chordTypes.map((chord) => [chord.key, chord.intervals]),
+  );
+  const positionsByType = Object.fromEntries(
+    chordTypes.map((chord) => [chord.key, chord.positions]),
+  );
+
   const [rootPc, setRootPc] = useState(0);
-  const [chordType, setChordType] = useState<ChordType>("M");
+  const [chordType, setChordType] = useState<ChordType>(
+    (chordTypes[0]?.key as ChordType) ?? "M",
+  );
   const [cagedPos, setCagedPos] = useState<CagedPosition>("E");
   const [useFlats, setUseFlats] = useState(false);
+  const [chordFrets, setChordFrets] = useState<number[] | null>(null);
   const [isDeleting, startDelete] = useTransition();
 
-  const shape = SHAPES[chordType]?.[cagedPos];
-  const chordFrets = shape ? computeFrets(rootPc, shape) : null;
+  function firstAvailablePosition(type: string): CagedPosition {
+    const positions = positionsByType[type] ?? [];
+    return (positions.find((p) => CAGED.includes(p as CagedPosition)) ??
+      "E") as CagedPosition;
+  }
 
   function handleChordTypeChange(next: ChordType) {
     setChordType(next);
-    if (!SHAPES[next]?.[cagedPos]) {
-      setCagedPos(CAGED.find((p) => SHAPES[next]?.[p]) ?? "E");
+    const positions = positionsByType[next] ?? [];
+    if (!positions.includes(cagedPos)) {
+      setCagedPos(firstAvailablePosition(next));
     }
   }
 
@@ -53,12 +68,33 @@ export default function ChordsPageClient({
     setRootPc(preset.rootPc);
     setChordType(nextType);
     const savedPos = preset.cagedPos as CagedPosition | null;
-    if (savedPos && SHAPES[nextType]?.[savedPos]) {
+    const positions = positionsByType[nextType] ?? [];
+    if (savedPos && positions.includes(savedPos)) {
       setCagedPos(savedPos);
     } else {
-      setCagedPos(CAGED.find((p) => SHAPES[nextType]?.[p]) ?? "E");
+      setCagedPos(firstAvailablePosition(nextType));
     }
   }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchChordFrets(chordType, cagedPos, rootPc)
+      .then((frets) => {
+        if (!cancelled) {
+          setChordFrets(frets);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setChordFrets(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [chordType, cagedPos, rootPc]);
 
   return (
     <main className="w-full max-w-5xl mx-auto min-h-screen py-10 px-4">
@@ -112,9 +148,9 @@ export default function ChordsPageClient({
             value={chordType}
             onChange={(e) => handleChordTypeChange(e.target.value as ChordType)}
           >
-            {CHORD_ORDER.map((type) => (
-              <option key={type} value={type}>
-                {CHORD_LABELS[type]}
+            {chordTypes.map((type) => (
+              <option key={type.key} value={type.key}>
+                {type.label}
               </option>
             ))}
           </select>
@@ -177,7 +213,7 @@ export default function ChordsPageClient({
         style={{ borderColor: "rgba(255,255,255,0.08)" }}
       >
         {CAGED.map((pos) => {
-          const isAvailable = Boolean(SHAPES[chordType]?.[pos]);
+          const isAvailable = (positionsByType[chordType] ?? []).includes(pos);
           return (
             <button
               key={pos}
@@ -253,8 +289,7 @@ export default function ChordsPageClient({
                   </span>
                   {" — "}
                   {NOTE_NAMES_SHARP[preset.rootPc]}{" "}
-                  {CHORD_LABELS[preset.scaleOrChord as ChordType] ??
-                    preset.scaleOrChord}
+                  {chordLabels[preset.scaleOrChord] ?? preset.scaleOrChord}
                   {preset.cagedPos ? ` — forme ${preset.cagedPos}` : ""}
                 </button>
                 <button
@@ -290,14 +325,14 @@ export default function ChordsPageClient({
         }}
       >
         <h2>Bibliothèque d&apos;accords</h2>
-        {LIBRARY_GROUPS.map((group) => (
+        {libraryGroups.map((group) => (
           <div key={group.title}>
             <h3>{group.title}</h3>
             <div className="flex flex-wrap gap-2">
               {group.keys.map((key) => (
                 <button
                   key={key}
-                  onClick={() => handleChordTypeChange(key)}
+                  onClick={() => handleChordTypeChange(key as ChordType)}
                   className="rounded-md px-3 py-2 text-sm flex flex-col gap-1"
                   style={{
                     background: "var(--wood-dark)",
@@ -306,7 +341,7 @@ export default function ChordsPageClient({
                   }}
                 >
                   <span>{key}</span>
-                  <span>{CHORD_INTERVALS[key].join(", ")}</span>
+                  <span>{(intervalsByType[key] ?? []).join(", ")}</span>
                 </button>
               ))}
             </div>

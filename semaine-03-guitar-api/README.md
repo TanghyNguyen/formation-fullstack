@@ -32,6 +32,9 @@ Ouvrir :
 | `GET` | `/health` | `{ "status": "ok" }` |
 | `GET` | `/scales` | Liste des gammes (`key`, `label`, `intervals`) |
 | `GET` | `/scales/{name}/notes?root_pc=0` | Pitch classes à surligner |
+| `GET` | `/chords/types` | Types d'accords + positions CAGED disponibles |
+| `GET` | `/chords/library` | Bibliothèque d'accords groupée |
+| `GET` | `/chords/frets?root_pc=0&chord_type=M&position=E` | Frettes du doigté CAGED |
 
 [Live API](https://formation-fullstack-production.up.railway.app/health)
 
