@@ -49,6 +49,7 @@ export type ChordProgressionsResponse = {
   source: string;
   model?: string;
   ai_error?: string;
+  cached?: boolean;
   progressions: ChordProgression[];
 };
 

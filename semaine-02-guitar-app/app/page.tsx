@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { fetchDegreeStyles, fetchScales } from "@/lib/guitar-api";
+import { fetchChordTypes, fetchDegreeStyles, fetchScales } from "@/lib/guitar-api";
 import HomePageClient from "@/components/HomePageClient";
 
 export default async function HomePage() {
@@ -12,10 +12,14 @@ export default async function HomePage() {
       })
     : [];
   const isLoggedIn = !!session?.user?.id;
-  const [scales, degreeStyles] = await Promise.all([
+  const [scales, degreeStyles, chordTypes] = await Promise.all([
     fetchScales(),
     fetchDegreeStyles(),
+    fetchChordTypes(),
   ]);
+  const chordLabels = Object.fromEntries(
+    chordTypes.map((chord) => [chord.key, chord.label]),
+  );
 
   return (
     <HomePageClient
@@ -23,6 +27,7 @@ export default async function HomePage() {
       presets={presets}
       scales={scales}
       degreeStyles={degreeStyles}
+      chordLabels={chordLabels}
     />
   );
 }

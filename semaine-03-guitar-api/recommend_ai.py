@@ -1,6 +1,10 @@
 """Recommandations de progressions d'accords via LLM (Ollama, Groq, OpenAI)."""
 
 import json
+import os
+import time
+
+from openai import APIConnectionError, APIStatusError, AuthenticationError
 from pydantic import BaseModel, Field, ValidationError
 
 from caged import CHORD_ORDER
@@ -108,8 +112,29 @@ Règles :
 """
 
 
+_CACHE: dict[str, tuple[float, dict]] = {}
+_CACHE_TTL_SECONDS = int(os.getenv("PROGRESSIONS_CACHE_TTL", "3600"))
+
+
+def _cache_enabled() -> bool:
+    return os.getenv("PROGRESSIONS_CACHE", "true").lower() in {"1", "true", "yes"}
+
+
+def _cache_key(scale_key: str, root_pc: int, provider_name: str, model: str) -> str:
+    return f"{provider_name}:{model}:{scale_key}:{root_pc}"
+
+
 def recommend_progressions_ai(scale_key: str, root_pc: int) -> dict:
     provider = resolve_llm_provider()
+    key = _cache_key(scale_key, root_pc, provider.name, provider.model)
+
+    if _cache_enabled() and key in _CACHE:
+        cached_at, cached_result = _CACHE[key]
+        if time.time() - cached_at < _CACHE_TTL_SECONDS:
+            result = dict(cached_result)
+            result["cached"] = True
+            return result
+
     prompt = _build_prompt(scale_key, root_pc)
     request_kwargs: dict = {
         "model": provider.model,
@@ -163,10 +188,14 @@ def recommend_progressions_ai(scale_key: str, root_pc: int) -> dict:
     if not progressions:
         raise RuntimeError("AI returned no valid progressions")
 
-    return {
+    result = {
         "scale_key": scale_key,
         "root_pc": root_pc,
         "source": provider.name,
         "model": provider.model,
         "progressions": progressions,
+        "cached": False,
     }
+    if _cache_enabled():
+        _CACHE[key] = (time.time(), result)
+    return result

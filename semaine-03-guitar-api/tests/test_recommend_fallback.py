@@ -13,3 +13,15 @@ def test_fallback_follows_root_for_non_c_major():
     first = result["progressions"][0]["chords"][0]
     assert first["root_pc"] == 9
     assert first["roman"] == "I"
+
+
+def test_fallback_dorian_has_modal_progression():
+    result = recommend_progressions_fallback("dorian", 2)
+    assert result["progressions"][0]["name"].startswith("Dorien")
+    assert result["progressions"][0]["chords"][0]["roman"] == "i"
+
+
+def test_fallback_mixolydian_has_bVII():
+    result = recommend_progressions_fallback("mixolydian", 7)
+    romans = [c["roman"] for c in result["progressions"][0]["chords"]]
+    assert "bVII" in romans

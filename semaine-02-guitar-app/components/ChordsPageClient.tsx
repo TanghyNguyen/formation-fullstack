@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import type { ChordLibraryGroup, ChordTypeInfo } from "@/lib/guitar-api";
 import { fetchChordFrets } from "@/lib/guitar-api";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
@@ -50,6 +51,7 @@ export default function ChordsPageClient({
   const [useFlats, setUseFlats] = useState(false);
   const [chordFrets, setChordFrets] = useState<number[] | null>(null);
   const [isDeleting, startDelete] = useTransition();
+  const searchParams = useSearchParams();
 
   function firstAvailablePosition(type: string): CagedPosition {
     const positions = positionsByType[type] ?? [];
@@ -77,6 +79,29 @@ export default function ChordsPageClient({
       setCagedPos(firstAvailablePosition(nextType));
     }
   }
+
+  useEffect(() => {
+    const rootParam = searchParams.get("root_pc");
+    const typeParam = searchParams.get("chord_type");
+
+    if (rootParam !== null) {
+      const pc = Number.parseInt(rootParam, 10);
+      if (!Number.isNaN(pc) && pc >= 0 && pc <= 11) {
+        setRootPc(pc);
+      }
+    }
+
+    if (typeParam && intervalsByType[typeParam]) {
+      const nextType = typeParam as ChordType;
+      setChordType(nextType);
+      const positions = positionsByType[nextType] ?? [];
+      setCagedPos((current) =>
+        positions.includes(current)
+          ? current
+          : firstAvailablePosition(nextType),
+      );
+    }
+  }, [searchParams, intervalsByType, positionsByType]);
 
   useEffect(() => {
     let cancelled = false;

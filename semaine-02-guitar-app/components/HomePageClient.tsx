@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import type { ChordProgression, ChordProgressionsResponse, ScaleInfo } from "@/lib/guitar-api";
 import { fetchChordProgressions, fetchScaleNotes } from "@/lib/guitar-api";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
@@ -13,6 +14,7 @@ export default function HomePageClient({
   presets,
   scales,
   degreeStyles,
+  chordLabels,
 }: {
   isLoggedIn: boolean;
   presets: {
@@ -24,6 +26,7 @@ export default function HomePageClient({
   }[];
   scales: ScaleInfo[];
   degreeStyles: DegreeStyles;
+  chordLabels: Record<string, string>;
 }) {
   const scaleLabels = Object.fromEntries(
     scales.map((scale) => [scale.key, scale.label]),
@@ -90,7 +93,9 @@ export default function HomePageClient({
                 ? `Généré par Ollama (${data.model ?? "local"}) — gratuit, sans quota.`
                 : data.source === "groq"
                   ? `Généré par Groq (${data.model ?? "cloud"}) — IA gratuite en production.`
-                  : null,
+                  : data.cached
+                    ? "Progression en cache (même gamme / fondamentale)."
+                    : null,
             );
           }
           setProgressionsLoadedKey(progressionsKey);
@@ -311,18 +316,24 @@ export default function HomePageClient({
               </p>
               <ol className="flex flex-wrap gap-2 list-none">
                 {progression.chords.map((chord, index) => (
-                  <li
-                    key={`${progression.name}-${index}`}
-                    className="text-sm px-3 py-2 rounded-md"
-                    style={{
-                      background: "var(--wood-dark)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                    }}
-                  >
-                    {NOTE_NAMES_SHARP[chord.root_pc]} {chord.chord_type}
-                    {chord.roman ? (
-                      <span className="opacity-70"> ({chord.roman})</span>
-                    ) : null}
+                  <li key={`${progression.name}-${index}`}>
+                    <Link
+                      href={`/chords?root_pc=${chord.root_pc}&chord_type=${encodeURIComponent(chord.chord_type)}`}
+                      className="text-sm px-3 py-2 rounded-md inline-block transition-opacity hover:opacity-90"
+                      style={{
+                        background: "var(--wood-dark)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "var(--text)",
+                        cursor: "pointer",
+                      }}
+                      title="Voir cet accord sur le manche CAGED"
+                    >
+                      {NOTE_NAMES_SHARP[chord.root_pc]}{" "}
+                      {chordLabels[chord.chord_type] ?? chord.chord_type}
+                      {chord.roman ? (
+                        <span className="opacity-70"> ({chord.roman})</span>
+                      ) : null}
+                    </Link>
                   </li>
                 ))}
               </ol>
