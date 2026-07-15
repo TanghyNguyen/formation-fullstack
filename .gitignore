@@ -23,6 +23,12 @@ pnpm-debug.log*
 .vscode/
 .idea/
 
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # Misc
 *.tsbuildinfo
 next-env.d.ts
