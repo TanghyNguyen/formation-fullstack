@@ -75,57 +75,64 @@ export default function HomePageClient({
 
   useEffect(() => {
     let cancelled = false;
+    const scaleAtRequest = currentScale;
+    const rootAtRequest = rootPc;
+    const keyAtRequest = progressionsKey;
 
-    fetchChordProgressions(currentScale, rootPc)
+    fetchChordProgressions(scaleAtRequest, rootAtRequest)
       .then((data: ChordProgressionsResponse) => {
-        if (!cancelled) {
-          setProgressions(data.progressions);
-          setProgressionsError(null);
-          if (data.source === "rules") {
-            setProgressionsNotice(
-              data.ai_error?.includes("QUOTA")
-                ? "Quota IA épuisé — progressions de secours affichées. Passe à Ollama (local) ou Groq (gratuit)."
-                : "IA indisponible — progressions de secours affichées.",
-            );
-          } else {
-            setProgressionsNotice(
-              data.source === "ollama"
-                ? `Généré par Ollama (${data.model ?? "local"}) — gratuit, sans quota.`
-                : data.source === "groq"
-                  ? `Généré par Groq (${data.model ?? "cloud"}) — IA gratuite en production.`
-                  : data.cached
-                    ? "Progression en cache (même gamme / fondamentale)."
-                    : null,
-            );
-          }
-          setProgressionsLoadedKey(progressionsKey);
+        if (cancelled) return;
+        if (
+          data.scale_key !== scaleAtRequest ||
+          data.root_pc !== rootAtRequest
+        ) {
+          return;
         }
+        setProgressions(data.progressions);
+        setProgressionsError(null);
+        if (data.source === "rules") {
+          setProgressionsNotice(
+            data.ai_error?.includes("QUOTA")
+              ? "Quota IA épuisé — progressions de secours affichées. Passe à Ollama (local) ou Groq (gratuit)."
+              : "IA indisponible — progressions de secours affichées.",
+          );
+        } else {
+          setProgressionsNotice(
+            data.source === "ollama"
+              ? `Généré par Ollama (${data.model ?? "local"}) — gratuit, sans quota.`
+              : data.source === "groq"
+                ? `Généré par Groq (${data.model ?? "cloud"}) — IA gratuite en production.`
+                : data.cached
+                  ? "Progression en cache (même gamme / fondamentale)."
+                  : null,
+          );
+        }
+        setProgressionsLoadedKey(keyAtRequest);
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
-          setProgressions([]);
-          const message =
-            error instanceof Error ? error.message : "Erreur inconnue";
-          if (message.includes("503")) {
-            setProgressionsError(
-              "Clé IA non configurée sur l'API (GROQ_API_KEY ou OPENAI_API_KEY).",
-            );
-          } else if (
-            message.includes("GROQ_API_KEY") ||
-            message.includes("placeholder") ||
-            message.includes("invalid") ||
-            message.includes("OPENAI_API_KEY")
-          ) {
-            setProgressionsError(
-              "Clé IA manquante ou invalide — configure GROQ_API_KEY sur Railway (voir DEPLOY-GROQ.md).",
-            );
-          } else {
-            setProgressionsError(
-              "Impossible de charger les progressions IA pour le moment.",
-            );
-          }
-          setProgressionsLoadedKey(progressionsKey);
+        if (cancelled) return;
+        setProgressions([]);
+        const message =
+          error instanceof Error ? error.message : "Erreur inconnue";
+        if (message.includes("503")) {
+          setProgressionsError(
+            "Clé IA non configurée sur l'API (GROQ_API_KEY ou OPENAI_API_KEY).",
+          );
+        } else if (
+          message.includes("GROQ_API_KEY") ||
+          message.includes("placeholder") ||
+          message.includes("invalid") ||
+          message.includes("OPENAI_API_KEY")
+        ) {
+          setProgressionsError(
+            "Clé IA manquante ou invalide — configure GROQ_API_KEY sur Railway (voir DEPLOY-GROQ.md).",
+          );
+        } else {
+          setProgressionsError(
+            "Impossible de charger les progressions IA pour le moment.",
+          );
         }
+        setProgressionsLoadedKey(keyAtRequest);
       });
 
     return () => {
@@ -283,7 +290,11 @@ export default function HomePageClient({
           Progressions d&apos;accords (IA)
         </h2>
         <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
-          Suggestions générées par IA selon la gamme et la fondamentale affichées.
+          Suggestions pour{" "}
+          <strong style={{ color: "var(--text)" }}>
+            {NOTE_NAMES_SHARP[rootPc]} {scaleLabels[currentScale] ?? currentScale}
+          </strong>
+          .
         </p>
         {progressionsLoading && (
           <p className="text-sm" style={{ color: "var(--muted)" }}>

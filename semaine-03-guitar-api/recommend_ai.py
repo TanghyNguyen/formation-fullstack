@@ -88,8 +88,9 @@ Contexte :
 - Types d'accords autorisés : {chord_types}
 
 Tâche :
-Propose exactement 2 progressions d'accords (4 à 6 accords chacune) cohérentes avec cette gamme.
-Chaque accord doit utiliser une fondamentale parmi les pitch classes 0-11 et un type autorisé.
+Propose exactement 2 progressions d'accords (4 à 6 accords chacune) cohérentes avec **cette gamme précise** ({scale_label}, clé "{scale_key}").
+Les accords doivent respecter l'harmonie de cette gamme — pas une autre (ex. mineur harmonique → dominante majeure sur le 5e degré).
+Chaque accord doit utiliser une fondamentale issue des notes diatoniques ci-dessus et un type autorisé.
 
 Réponds UNIQUEMENT en JSON valide avec ce schéma :
 {{

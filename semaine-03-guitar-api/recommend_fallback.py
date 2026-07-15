@@ -11,6 +11,14 @@ _MODE_DEGREES: dict[str, tuple[list[str], list[str]]] = {
     "major": (_MAJOR_ROMAN, _MAJOR_TYPES),
     "ionian": (_MAJOR_ROMAN, _MAJOR_TYPES),
     "minor": (_MINOR_ROMAN, _MINOR_TYPES),
+    "harmonicMinor": (
+        ["i", "ii°", "III+", "iv", "V", "VI", "vii°"],
+        ["m", "dim", "aug", "m", "M", "M", "dim"],
+    ),
+    "melodicMinor": (
+        ["i", "ii", "III+", "IV", "V", "vi°", "vii°"],
+        ["m", "m", "aug", "M", "M", "dim", "dim"],
+    ),
     "dorian": (
         ["i", "ii", "bIII", "IV", "v", "vi°", "bVII"],
         ["m", "m", "M", "M", "m", "dim", "M"],
@@ -34,6 +42,22 @@ _PROGRESSION_TEMPLATES: dict[str, list[tuple[str, str, list[int]]]] = {
     "minor": [
         ("Mineur classique i–iv–V–i", "Progression mineure naturelle (sans IA).", [0, 3, 4, 0]),
         ("Ballade i–VI–III–VII", "Couleur pop mineure (sans IA).", [0, 5, 2, 6]),
+    ],
+    "harmonicMinor": [
+        (
+            "Mineur harmonique i–V–i",
+            "Cadence avec dominante majeure (sans IA).",
+            [0, 4, 0],
+        ),
+        (
+            "Mineur harmonique i–iv–V–i",
+            "Progression classique orientale (sans IA).",
+            [0, 3, 4, 0],
+        ),
+    ],
+    "melodicMinor": [
+        ("Mélodique mineur i–IV–V–i", "Jazz mineur mélodique (sans IA).", [0, 3, 4, 0]),
+        ("Mélodique mineur i–ii–V–i", "Couleur Bebop (sans IA).", [0, 1, 4, 0]),
     ],
     "blues": [
         ("Blues 12 mesures (simplifié)", "Progression blues de base (sans IA).", [0, 0, 0, 0]),
