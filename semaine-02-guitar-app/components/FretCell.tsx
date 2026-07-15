@@ -1,7 +1,6 @@
 "use client";
 
-import type { ChordDegree } from "@/lib/caged";
-import { DEGREE_STYLES } from "@/lib/caged";
+import type { ChordDegree, DegreeStyles } from "@/lib/music-types";
 
 type FretCellProps = {
   note: string;
@@ -10,6 +9,7 @@ type FretCellProps = {
   onCellClick: () => void;
   showDegrees: boolean;
   degree: ChordDegree | null;
+  degreeStyles: DegreeStyles;
 };
 
 export default function FretCell({
@@ -19,13 +19,14 @@ export default function FretCell({
   onCellClick,
   showDegrees,
   degree,
+  degreeStyles,
 }: FretCellProps) {
   return (
     <button
       style={{
         background:
           showDegrees && degree
-            ? DEGREE_STYLES[degree].color
+            ? degreeStyles[degree].color
             : isRoot
               ? "var(--root)"
               : isHighlighted

@@ -2,8 +2,8 @@
 
 import { pitchClassAt } from "@/lib/tuning";
 import { noteName } from "@/lib/notes";
-import type { CagedPosition, ChordType } from "@/lib/caged";
-import { chordDegree, DEGREE_STYLES } from "@/lib/caged";
+import type { CagedPosition, ChordType, DegreeStyles } from "@/lib/music-types";
+import { chordDegree } from "@/lib/degrees";
 
 type ChordDiagramProps = {
   chordFrets: readonly number[];
@@ -11,6 +11,7 @@ type ChordDiagramProps = {
   useFlats: boolean;
   chordType: ChordType;
   cagedPos: CagedPosition;
+  degreeStyles: DegreeStyles;
 };
 
 export default function ChordDiagram({
@@ -19,6 +20,7 @@ export default function ChordDiagram({
   useFlats,
   chordType,
   cagedPos,
+  degreeStyles,
 }: ChordDiagramProps) {
   const W = 150;
   const pad = 30;
@@ -205,7 +207,7 @@ export default function ChordDiagram({
 
           return (
             <g key={s}>
-              <circle cx={x} cy={y} r={9} fill={DEGREE_STYLES[degree].color} />
+              <circle cx={x} cy={y} r={9} fill={degreeStyles[degree].color} />
               <text
                 x={x}
                 y={y + 3.5}

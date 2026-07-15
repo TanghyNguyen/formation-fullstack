@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState, useTransition } from "react";
-import type { ScaleInfo } from "@/lib/guitar-api";
-import { fetchScaleNotes } from "@/lib/guitar-api";
+import type { ChordRecommendation, ScaleInfo } from "@/lib/guitar-api";
+import { fetchChordRecommendations, fetchScaleNotes } from "@/lib/guitar-api";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
+import type { DegreeStyles } from "@/lib/music-types";
 import FretBoard from "@/components/FretBoard";
 import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
@@ -11,6 +12,7 @@ export default function HomePageClient({
   isLoggedIn,
   presets,
   scales,
+  degreeStyles,
 }: {
   isLoggedIn: boolean;
   presets: {
@@ -21,6 +23,7 @@ export default function HomePageClient({
     type: string;
   }[];
   scales: ScaleInfo[];
+  degreeStyles: DegreeStyles;
 }) {
   const scaleLabels = Object.fromEntries(
     scales.map((scale) => [scale.key, scale.label]),
@@ -34,6 +37,9 @@ export default function HomePageClient({
   const [highlightSet, setHighlightSet] = useState<Set<number>>(new Set());
   const [showDegrees, setShowDegrees] = useState(true);
   const [isDeleting, startDelete] = useTransition();
+  const [recommendations, setRecommendations] = useState<ChordRecommendation[]>(
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +60,27 @@ export default function HomePageClient({
       cancelled = true;
     };
   }, [currentScale, rootPc]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchChordRecommendations(currentScale, rootPc)
+      .then((items) => {
+        if (!cancelled) {
+          setRecommendations(items);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRecommendations([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentScale, rootPc]);
+
   return (
     <main className="w-full max-w-5xl mx-auto min-h-screen py-10 px-4">
       <h1
@@ -188,7 +215,39 @@ export default function HomePageClient({
         onCellClick={(pc) => setRootPc(pc)}
         showDegrees={showDegrees}
         scaleIntervals={scaleIntervals[currentScale] ?? []}
+        degreeStyles={degreeStyles}
       />
+      {recommendations.length > 0 && (
+        <section
+          className="mt-8 rounded-lg py-4 px-4"
+          style={{
+            background: "var(--panel)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <h2
+            className="text-xl font-bold mb-3"
+            style={{ color: "var(--accent)" }}
+          >
+            Accords suggérés (API)
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {recommendations.map((rec, index) => (
+              <li
+                key={`${rec.root_pc}-${rec.chord_type}-${index}`}
+                className="text-sm px-3 py-2 rounded-md"
+                style={{
+                  background: "var(--wood-dark)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                {NOTE_NAMES_SHARP[rec.root_pc]} {rec.chord_type}
+                <span className="opacity-70"> — degré {rec.scale_degree}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {isLoggedIn && presets.length > 0 && (
         <section className="mt-8">
           <h2

@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import type { ChordLibraryGroup, ChordTypeInfo } from "@/lib/guitar-api";
 import { fetchChordFrets } from "@/lib/guitar-api";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
-import type { CagedPosition, ChordType } from "@/lib/caged";
+import type { CagedPosition, ChordType, DegreeStyles } from "@/lib/music-types";
 import CagedFretboard from "@/components/CagedFretboard";
 import ChordDiagram from "@/components/ChordDiagram";
 import SubmitButton from "@/components/SubmitButton";
@@ -17,6 +17,7 @@ export default function ChordsPageClient({
   presets,
   chordTypes,
   libraryGroups,
+  degreeStyles,
 }: {
   isLoggedIn: boolean;
   presets: {
@@ -29,6 +30,7 @@ export default function ChordsPageClient({
   }[];
   chordTypes: ChordTypeInfo[];
   libraryGroups: ChordLibraryGroup[];
+  degreeStyles: DegreeStyles;
 }) {
   const chordLabels = Object.fromEntries(
     chordTypes.map((chord) => [chord.key, chord.label]),
@@ -243,7 +245,8 @@ export default function ChordsPageClient({
                 chordFrets={chordFrets}
                 rootPc={rootPc}
                 useFlats={useFlats}
-                chordType={chordType}
+                chordIntervals={intervalsByType[chordType] ?? []}
+                degreeStyles={degreeStyles}
               />
             </div>
             <ChordDiagram
@@ -252,6 +255,7 @@ export default function ChordsPageClient({
               useFlats={useFlats}
               chordType={chordType}
               cagedPos={cagedPos}
+              degreeStyles={degreeStyles}
             />
           </>
         ) : (

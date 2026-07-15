@@ -1,3 +1,5 @@
+import type { DegreeStyles } from "@/lib/music-types";
+
 export type ScaleInfo = {
   key: string;
   label: string;
@@ -27,6 +29,12 @@ export type ChordFretsResponse = {
   chord_type: string;
   position: string;
   frets: number[];
+};
+
+export type ChordRecommendation = {
+  root_pc: number;
+  chord_type: string;
+  scale_degree: number;
 };
 
 function getApiUrl(): string {
@@ -110,4 +118,37 @@ export async function fetchChordFrets(
 
   const data: ChordFretsResponse = await res.json();
   return data.frets;
+}
+
+export async function fetchDegreeStyles(): Promise<DegreeStyles> {
+  const res = await fetch(`${getApiUrl()}/degrees/styles`, {
+    next: { revalidate: 3600 },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch degree styles: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function fetchChordRecommendations(
+  scaleKey: string,
+  rootPc: number,
+): Promise<ChordRecommendation[]> {
+  const res = await fetch(`${getApiUrl()}/recommend/chords`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scale_key: scaleKey, root_pc: rootPc }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch recommendations: ${res.status}`);
+  }
+
+  const data: {
+    recommendations: ChordRecommendation[];
+  } = await res.json();
+  return data.recommendations;
 }

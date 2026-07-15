@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 from scales import SCALES, SCALE_LABELS, pitch_classes_from_root
 from caged import (
@@ -9,6 +10,8 @@ from caged import (
     get_shape,
     list_chord_types,
 )
+from degrees import DEGREE_STYLES, chord_degree
+from recommend import recommend_chords
 
 app = FastAPI(
     title="Guitar API",
@@ -22,7 +25,7 @@ app.add_middleware(
         "http://localhost:3000",
         "https://formation-fullstack.vercel.app",
     ],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -102,4 +105,42 @@ def chord_frets(
         "chord_type": chord_type,
         "position": position,
         "frets": compute_frets(root_pc, shape),
+    }
+
+
+@app.get("/degrees/styles")
+def degree_styles():
+    return DEGREE_STYLES
+
+
+@app.get("/degrees/at")
+def degree_at(
+    pc: int = Query(..., ge=0, le=11),
+    root_pc: int = Query(..., ge=0, le=11, alias="root_pc"),
+):
+    degree = chord_degree(pc, root_pc)
+    return {
+        "pc": pc,
+        "root_pc": root_pc,
+        "degree": degree,
+        "style": DEGREE_STYLES[degree],
+    }
+
+
+class RecommendRequest(BaseModel):
+    scale_key: str
+    root_pc: int = Field(..., ge=0, le=11)
+
+
+@app.post("/recommend/chords")
+def recommend_chords_for_scale(body: RecommendRequest):
+    if body.scale_key not in SCALES:
+        raise HTTPException(
+            status_code=404, detail=f"Scale '{body.scale_key}' not found"
+        )
+
+    return {
+        "scale_key": body.scale_key,
+        "root_pc": body.root_pc,
+        "recommendations": recommend_chords(body.scale_key, body.root_pc),
     }

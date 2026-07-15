@@ -6,7 +6,8 @@ import {
 } from "@/lib/tuning";
 import { noteName } from "@/lib/notes";
 import FretCell from "./FretCell";
-import { chordDegree, DEGREE_STYLES } from "@/lib/caged";
+import { chordDegree, legendDegreesFromIntervals } from "@/lib/degrees";
+import type { DegreeStyles } from "@/lib/music-types";
 
 type FretBoardProps = {
   highlightSet: Set<number>;
@@ -15,6 +16,7 @@ type FretBoardProps = {
   onCellClick: (pc: number) => void;
   showDegrees: boolean;
   scaleIntervals: readonly number[];
+  degreeStyles: DegreeStyles;
 };
 
 const NUM_FRETS = 16;
@@ -26,15 +28,14 @@ export default function FretBoard({
   onCellClick,
   showDegrees,
   scaleIntervals,
+  degreeStyles,
 }: FretBoardProps) {
   const strings = Array.from(
     { length: NUM_STRINGS },
     (_, i) => NUM_STRINGS - 1 - i,
   );
   const frets = Array.from({ length: NUM_FRETS + 1 }, (_, i) => i);
-  const degrees = [
-    ...new Set(scaleIntervals.map((i) => chordDegree(i, 0))),
-  ];
+  const degrees = legendDegreesFromIntervals(scaleIntervals);
 
   return (
     <div className="w-full pb-2">
@@ -97,6 +98,7 @@ export default function FretBoard({
                   onCellClick={() => onCellClick(pc)}
                   showDegrees={showDegrees}
                   degree={degree}
+                  degreeStyles={degreeStyles}
                 />
               );
             })}
@@ -112,9 +114,9 @@ export default function FretBoard({
             <div key={deg} className="flex items-center gap-1.5">
               <span
                 className="w-3 h-3 rounded-full shrink-0"
-                style={{ background: DEGREE_STYLES[deg].color }}
+                style={{ background: degreeStyles[deg].color }}
               />
-              {DEGREE_STYLES[deg].label}
+              {degreeStyles[deg].label}
             </div>
           ))}
         </div>

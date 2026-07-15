@@ -6,30 +6,32 @@ import {
   guitarStringNumberFromSi,
 } from "@/lib/tuning";
 import { noteName } from "@/lib/notes";
-import { chordDegree, DEGREE_STYLES, CHORD_INTERVALS } from "@/lib/caged";
-import type { ChordType } from "@/lib/caged";
+import { chordDegree, legendDegreesFromIntervals } from "@/lib/degrees";
+import type { DegreeStyles } from "@/lib/music-types";
 
 const NUM_FRETS = 16;
 
 type CagedFretboardProps = {
   chordFrets: readonly number[];
-  chordType: ChordType;
   rootPc: number;
   useFlats: boolean;
+  chordIntervals: readonly number[];
+  degreeStyles: DegreeStyles;
 };
 
 export default function CagedFretboard({
   chordFrets,
   rootPc,
   useFlats,
-  chordType,
+  chordIntervals,
+  degreeStyles,
 }: CagedFretboardProps) {
   const strings = Array.from(
     { length: NUM_STRINGS },
     (_, i) => NUM_STRINGS - 1 - i,
   );
   const frets = Array.from({ length: NUM_FRETS + 1 }, (_, i) => i);
-  const degrees = CHORD_INTERVALS[chordType].map((i) => chordDegree(i, 0));
+  const degrees = legendDegreesFromIntervals(chordIntervals);
 
   return (
     <div className="w-full pb-2">
@@ -44,7 +46,6 @@ export default function CagedFretboard({
         }}
         className="overflow-x-auto flex flex-col gap-1"
       >
-        {/* En-tête numéros de frettes */}
         <div
           className="grid gap-1 items-center"
           style={{
@@ -63,7 +64,6 @@ export default function CagedFretboard({
           ))}
         </div>
 
-        {/* Lignes de cordes */}
         {strings.map((si) => (
           <div
             key={si}
@@ -95,7 +95,7 @@ export default function CagedFretboard({
                   className="w-full min-h-15 flex items-center justify-center shrink-0 rounded-md text-base font-semibold"
                   style={{
                     background: degree
-                      ? DEGREE_STYLES[degree].color
+                      ? degreeStyles[degree].color
                       : "rgba(20, 16, 12, 0.55)",
                     color: isRoot || isActive ? "#0d1a2d" : "var(--muted)",
                     border: "1px solid rgba(255,255,255,0.06)",
@@ -121,9 +121,9 @@ export default function CagedFretboard({
           <div key={deg} className="flex items-center gap-1.5">
             <span
               className="w-3 h-3 rounded-full shrink-0"
-              style={{ background: DEGREE_STYLES[deg].color }}
+              style={{ background: degreeStyles[deg].color }}
             />
-            {DEGREE_STYLES[deg].label}
+            {degreeStyles[deg].label}
           </div>
         ))}
       </div>

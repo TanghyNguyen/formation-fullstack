@@ -91,19 +91,14 @@ Un livrable **déployé** à chaque palier — jamais plusieurs features empilé
 - [x] README pro : stack, features full-stack, captures, URL live
 - [x] Nettoyage : validation presets, états de chargement, suppression `lib/chords.ts` orphelin
 - [x] Rotation des secrets exposés dans le chat
-- [ ] Bilan Phase 2 → préparer la Phase 3 (Python / FastAPI / IA)
+- [x] Bilan Phase 2 → préparer la Phase 3 (Python / FastAPI / IA)
 
 ---
 
-## Récap
+## Phase 3 & 4
 
-| Semaine | Thème | Livrable déployé |
-|---|---|---|
-| A | Deploy + Neon/Prisma | Guitare en ligne + base connectée |
-| B | Auth NextAuth + Google | Connexion / déconnexion |
-| C | Presets full-stack | Sauvegarde / chargement par utilisateur |
-| D | Deploy full-stack + portfolio | App complète en prod + README pro |
+Voir `semaine-03-guitar-api/PLAN-PHASE-3.md` et `PLAN-PHASE-4.md`.
 
 ## Prochaine action
 
-**Phase 3** — API Python / FastAPI (ou feature IA) consommée par le front Next.js.
+**Phase 4 — Session I2** : cliquer un accord suggéré → ouvrir `/chords` avec l'accord appliqué.

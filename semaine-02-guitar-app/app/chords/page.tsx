@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { fetchChordLibrary, fetchChordTypes } from "@/lib/guitar-api";
+import { fetchChordLibrary, fetchChordTypes, fetchDegreeStyles } from "@/lib/guitar-api";
 import ChordsPageClient from "@/components/ChordsPageClient";
 
 export default async function ChordsPage() {
@@ -12,9 +12,10 @@ export default async function ChordsPage() {
       })
     : [];
   const isLoggedIn = !!session?.user?.id;
-  const [chordTypes, libraryGroups] = await Promise.all([
+  const [chordTypes, libraryGroups, degreeStyles] = await Promise.all([
     fetchChordTypes(),
     fetchChordLibrary(),
+    fetchDegreeStyles(),
   ]);
 
   return (
@@ -23,6 +24,7 @@ export default async function ChordsPage() {
       presets={presets}
       chordTypes={chordTypes}
       libraryGroups={libraryGroups}
+      degreeStyles={degreeStyles}
     />
   );
 }

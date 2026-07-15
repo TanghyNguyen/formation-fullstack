@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { fetchScales } from "@/lib/guitar-api";
+import { fetchDegreeStyles, fetchScales } from "@/lib/guitar-api";
 import HomePageClient from "@/components/HomePageClient";
 
 export default async function HomePage() {
@@ -12,9 +12,17 @@ export default async function HomePage() {
       })
     : [];
   const isLoggedIn = !!session?.user?.id;
-  const scales = await fetchScales();
+  const [scales, degreeStyles] = await Promise.all([
+    fetchScales(),
+    fetchDegreeStyles(),
+  ]);
 
   return (
-    <HomePageClient isLoggedIn={isLoggedIn} presets={presets} scales={scales} />
+    <HomePageClient
+      isLoggedIn={isLoggedIn}
+      presets={presets}
+      scales={scales}
+      degreeStyles={degreeStyles}
+    />
   );
 }
