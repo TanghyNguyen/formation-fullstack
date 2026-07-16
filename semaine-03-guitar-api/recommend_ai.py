@@ -186,11 +186,20 @@ def _cache_key(scale_key: str, root_pc: int, provider_name: str, model: str) -> 
     return f"{provider_name}:{model}:{scale_key}:{root_pc}"
 
 
-def recommend_progressions_ai(scale_key: str, root_pc: int) -> dict:
+def recommend_progressions_ai(
+    scale_key: str,
+    root_pc: int,
+    *,
+    force_refresh: bool = False,
+) -> dict:
     provider = resolve_llm_provider()
     key = _cache_key(scale_key, root_pc, provider.name, provider.model)
 
-    if _cache_enabled() and key in _CACHE:
+    if (
+        not force_refresh
+        and _cache_enabled()
+        and key in _CACHE
+    ):
         cached_at, cached_result = _CACHE[key]
         if time.time() - cached_at < _CACHE_TTL_SECONDS:
             result = dict(cached_result)
@@ -198,9 +207,14 @@ def recommend_progressions_ai(scale_key: str, root_pc: int) -> dict:
             return result
 
     prompt = _build_prompt(scale_key, root_pc)
+    if force_refresh:
+        prompt += (
+            "\n\nIMPORTANT : propose des progressions DIFFÉRENTES "
+            "des classiques trop évidentes (varie les degrés et l'ambiance)."
+        )
     request_kwargs: dict = {
         "model": provider.model,
-        "temperature": 0.7,
+        "temperature": 0.95 if force_refresh else 0.7,
         "messages": [
             {
                 "role": "system",

@@ -151,11 +151,16 @@ export async function fetchDegreeStyles(): Promise<DegreeStyles> {
 export async function fetchChordProgressions(
   scaleKey: string,
   rootPc: number,
+  options?: { forceRefresh?: boolean },
 ): Promise<ChordProgressionsResponse> {
   const res = await fetch(`${getApiUrl()}/recommend/chords`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scale_key: scaleKey, root_pc: rootPc }),
+    body: JSON.stringify({
+      scale_key: scaleKey,
+      root_pc: rootPc,
+      force_refresh: options?.forceRefresh ?? false,
+    }),
     cache: "no-store",
   });
 

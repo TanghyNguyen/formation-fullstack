@@ -50,9 +50,14 @@ export default function HomePageClient({
   const [progressionsLoadedKey, setProgressionsLoadedKey] = useState<
     string | null
   >(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const progressionsKey = `${currentScale}-${rootPc}`;
-  const progressionsLoading = progressionsLoadedKey !== progressionsKey;
+  const isInitialLoad =
+    progressionsLoadedKey !== progressionsKey && !isRefreshing;
+  const progressionsBusy = isInitialLoad || isRefreshing;
   const latestProgressionsKey = useRef(progressionsKey);
+  const forceRefreshRef = useRef(false);
 
   useEffect(() => {
     latestProgressionsKey.current = progressionsKey;
@@ -81,8 +86,10 @@ export default function HomePageClient({
   useEffect(() => {
     let cancelled = false;
     const keyAtRequest = progressionsKey;
+    const forceRefresh = forceRefreshRef.current;
+    forceRefreshRef.current = false;
 
-    fetchChordProgressions(currentScale, rootPc)
+    fetchChordProgressions(currentScale, rootPc, { forceRefresh })
       .then((data: ChordProgressionsResponse) => {
         if (cancelled) return;
         // Ignore les réponses obsolètes (changement rapide de fondamentale/gamme)
@@ -138,12 +145,24 @@ export default function HomePageClient({
           );
         }
         setProgressionsLoadedKey(keyAtRequest);
+      })
+      .finally(() => {
+        if (!cancelled && latestProgressionsKey.current === keyAtRequest) {
+          setIsRefreshing(false);
+        }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [currentScale, rootPc, progressionsKey]);
+  }, [currentScale, rootPc, progressionsKey, refreshToken]);
+
+  function handleRefreshProgressions() {
+    if (progressionsBusy) return;
+    forceRefreshRef.current = true;
+    setIsRefreshing(true);
+    setRefreshToken((token) => token + 1);
+  }
 
   return (
     <main className="w-full max-w-5xl mx-auto min-h-screen py-10 px-4">
@@ -288,12 +307,28 @@ export default function HomePageClient({
           border: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        <h2
-          className="text-xl font-bold mb-1"
-          style={{ color: "var(--accent)" }}
-        >
-          Progressions d&apos;accords (IA)
-        </h2>
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
+          <h2
+            className="text-xl font-bold"
+            style={{ color: "var(--accent)" }}
+          >
+            Progressions d&apos;accords (IA)
+          </h2>
+          <button
+            type="button"
+            onClick={handleRefreshProgressions}
+            disabled={progressionsBusy}
+            className="text-sm font-semibold px-3 py-1.5 rounded-md shrink-0"
+            style={{
+              color: "var(--accent)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              opacity: progressionsBusy ? 0.5 : 1,
+              cursor: progressionsBusy ? "wait" : "pointer",
+            }}
+          >
+            {isRefreshing ? "Rafraîchissement…" : "Rafraîchir"}
+          </button>
+        </div>
         <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
           Suggestions pour{" "}
           <strong style={{ color: "var(--text)" }}>
@@ -301,12 +336,14 @@ export default function HomePageClient({
           </strong>
           .
         </p>
-        {progressionsLoading && (
-          <p className="text-sm" style={{ color: "var(--muted)" }}>
-            Génération en cours…
+        {progressionsBusy && (
+          <p className="text-sm mb-3" style={{ color: "var(--muted)" }}>
+            {isRefreshing
+              ? "Nouvelles progressions en cours…"
+              : "Génération en cours…"}
           </p>
         )}
-        {progressionsNotice && (
+        {progressionsNotice && !isRefreshing && (
           <p className="text-sm mb-3" style={{ color: "var(--muted)" }}>
             {progressionsNotice}
           </p>
@@ -316,7 +353,7 @@ export default function HomePageClient({
             {progressionsError}
           </p>
         )}
-        {!progressionsLoading &&
+        {!isInitialLoad &&
           !progressionsError &&
           progressions.length > 0 &&
           progressions.map((progression) => (

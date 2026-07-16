@@ -135,6 +135,7 @@ def degree_at(
 class RecommendRequest(BaseModel):
     scale_key: str
     root_pc: int = Field(..., ge=0, le=11)
+    force_refresh: bool = False
 
 
 @app.post("/recommend/chords")
@@ -145,7 +146,11 @@ def recommend_chords_for_scale(body: RecommendRequest):
         )
 
     try:
-        return recommend_progressions_ai(body.scale_key, body.root_pc)
+        return recommend_progressions_ai(
+            body.scale_key,
+            body.root_pc,
+            force_refresh=body.force_refresh,
+        )
     except RuntimeError as exc:
         message = str(exc)
         if os.getenv("OPENAI_FALLBACK", "true").lower() in {"1", "true", "yes"}:
