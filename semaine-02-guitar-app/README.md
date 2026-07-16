@@ -22,9 +22,9 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 
 ## Captures d'écran
 
-### Page Gammes — presets utilisateur
+### Page Gammes — manche, harmonisation et progressions IA
 
-![Page Gammes avec manche interactif et presets](docs/screenshots/gammes.png)
+![Page Gammes avec manche, harmonisation diatonique et progressions IA](docs/screenshots/gammes.png)
 
 ### Page Accords — système CAGED
 
