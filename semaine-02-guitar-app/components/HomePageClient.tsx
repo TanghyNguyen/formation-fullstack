@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { ChordProgression, ChordProgressionsResponse, ScaleInfo } from "@/lib/guitar-api";
 import { fetchChordProgressions, fetchScaleNotes } from "@/lib/guitar-api";
@@ -52,6 +52,11 @@ export default function HomePageClient({
   >(null);
   const progressionsKey = `${currentScale}-${rootPc}`;
   const progressionsLoading = progressionsLoadedKey !== progressionsKey;
+  const latestProgressionsKey = useRef(progressionsKey);
+
+  useEffect(() => {
+    latestProgressionsKey.current = progressionsKey;
+  }, [progressionsKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,16 +80,15 @@ export default function HomePageClient({
 
   useEffect(() => {
     let cancelled = false;
-    const scaleAtRequest = currentScale;
-    const rootAtRequest = rootPc;
     const keyAtRequest = progressionsKey;
 
-    fetchChordProgressions(scaleAtRequest, rootAtRequest)
+    fetchChordProgressions(currentScale, rootPc)
       .then((data: ChordProgressionsResponse) => {
         if (cancelled) return;
+        // Ignore les réponses obsolètes (changement rapide de fondamentale/gamme)
+        if (latestProgressionsKey.current !== keyAtRequest) return;
         if (
-          data.scale_key !== scaleAtRequest ||
-          data.root_pc !== rootAtRequest
+          `${data.scale_key}-${data.root_pc}` !== keyAtRequest
         ) {
           return;
         }
@@ -111,6 +115,7 @@ export default function HomePageClient({
       })
       .catch((error: unknown) => {
         if (cancelled) return;
+        if (latestProgressionsKey.current !== keyAtRequest) return;
         setProgressions([]);
         const message =
           error instanceof Error ? error.message : "Erreur inconnue";

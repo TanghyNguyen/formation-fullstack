@@ -70,6 +70,57 @@ def _sanitize_progressions(payload: ProgressionsPayload) -> list[dict]:
     return cleaned
 
 
+def _is_tonic_roman(roman: str) -> bool:
+    core = (
+        roman.strip()
+        .replace("maj7", "")
+        .replace("m7", "")
+        .replace("7", "")
+        .replace("°", "")
+        .replace("+", "")
+        .replace("M", "")
+        .replace("m", "")
+    )
+    return core in {"I", "i"}
+
+
+def _chords_in_scale(chords: list[dict], scale_pcs: set[int]) -> bool:
+    return all(chord["root_pc"] in scale_pcs for chord in chords)
+
+
+def _transpose_chords(chords: list[dict], delta: int) -> list[dict]:
+    return [
+        {**chord, "root_pc": (chord["root_pc"] + delta) % 12} for chord in chords
+    ]
+
+
+def _align_progressions_to_root(
+    progressions: list[dict],
+    root_pc: int,
+    scale_pcs: set[int],
+) -> list[dict]:
+    """Corrige les progressions IA renvoyées dans la mauvaise tonalité (souvent Do)."""
+    aligned: list[dict] = []
+    for progression in progressions:
+        chords = progression["chords"]
+        if _chords_in_scale(chords, scale_pcs) and any(
+            chord["root_pc"] == root_pc for chord in chords
+        ):
+            aligned.append(progression)
+            continue
+
+        tonic = next(
+            (chord for chord in chords if _is_tonic_roman(chord.get("roman", ""))),
+            chords[0],
+        )
+        delta = (root_pc - tonic["root_pc"]) % 12
+        shifted = _transpose_chords(chords, delta)
+        if _chords_in_scale(shifted, scale_pcs):
+            aligned.append({**progression, "chords": shifted})
+
+    return aligned
+
+
 def _build_prompt(scale_key: str, root_pc: int) -> str:
     intervals = SCALES[scale_key]
     scale_notes = [NOTE_NAMES_SHARP[pc] for pc in scale_degrees_from_root(root_pc, intervals)]
@@ -77,20 +128,29 @@ def _build_prompt(scale_key: str, root_pc: int) -> str:
     root_name = NOTE_NAMES_SHARP[root_pc]
     scale_label = SCALE_LABELS.get(scale_key, scale_key)
     chord_types = ", ".join(CHORD_ORDER)
+    tonic_type = "m" if "minor" in scale_key.lower() or scale_key in {
+        "dorian",
+        "phrygian",
+        "locrian",
+        "blues",
+        "pentatonicMinor",
+    } else "M"
+    tonic_roman = "i" if tonic_type == "m" else "I"
 
     return f"""Tu es un professeur de guitare et d'harmonie.
 
 Contexte :
 - Gamme : {scale_label} (clé technique "{scale_key}")
-- Tonique : {root_name} (root_pc={root_pc})
+- Tonique : {root_name} (root_pc={root_pc})  ← OBLIGATOIRE pour l'accord I/i
 - Notes de la gamme (ordre diatonique) : {", ".join(scale_notes)}
 - Notes sur le manche (toutes tonalités) : {", ".join(highlight_notes)}
 - Types d'accords autorisés : {chord_types}
 
 Tâche :
-Propose exactement 2 progressions d'accords (4 à 6 accords chacune) cohérentes avec **cette gamme précise** ({scale_label}, clé "{scale_key}").
-Les accords doivent respecter l'harmonie de cette gamme — pas une autre (ex. mineur harmonique → dominante majeure sur le 5e degré).
-Chaque accord doit utiliser une fondamentale issue des notes diatoniques ci-dessus et un type autorisé.
+Propose exactement 2 progressions d'accords (4 à 6 accords chacune) cohérentes avec **cette gamme précise** ({scale_label} en {root_name}).
+Les accords doivent respecter l'harmonie de cette gamme — pas une autre.
+Chaque `root_pc` DOIT être une des pitch classes diatoniques : {", ".join(str(pc) for pc in scale_degrees_from_root(root_pc, intervals))}.
+L'accord de tonique (I/i) DOIT avoir root_pc={root_pc} ({root_name}).
 
 Réponds UNIQUEMENT en JSON valide avec ce schéma :
 {{
@@ -99,17 +159,18 @@ Réponds UNIQUEMENT en JSON valide avec ce schéma :
       "name": "Nom court de la progression",
       "description": "Une phrase expliquant l'ambiance ou l'usage",
       "chords": [
-        {{ "root_pc": 0, "chord_type": "M", "roman": "I" }}
+        {{ "root_pc": {root_pc}, "chord_type": "{tonic_type}", "roman": "{tonic_roman}" }}
       ]
     }}
   ]
 }}
 
 Règles :
-- root_pc entier entre 0 et 11
+- root_pc entier entre 0 et 11, parmi les notes de la gamme
 - chord_type parmi la liste autorisée
 - roman en chiffres romains (I, ii, V7, etc.)
-- Progressions musicalement plausibles pour la gamme donnée
+- Ne JAMAIS renvoyer une progression en Do (root_pc=0) si la tonique demandée est autre
+- Progressions musicalement plausibles pour {root_name} {scale_label}
 """
 
 
@@ -186,8 +247,10 @@ def recommend_progressions_ai(scale_key: str, root_pc: int) -> dict:
         raise RuntimeError(f"Invalid AI response: {exc}") from exc
 
     progressions = _sanitize_progressions(payload)
+    scale_pcs = set(scale_degrees_from_root(root_pc, SCALES[scale_key]))
+    progressions = _align_progressions_to_root(progressions, root_pc, scale_pcs)
     if not progressions:
-        raise RuntimeError("AI returned no valid progressions")
+        raise RuntimeError("AI returned no valid progressions for this tonic")
 
     result = {
         "scale_key": scale_key,
