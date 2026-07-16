@@ -2,7 +2,7 @@
 
 [Live demo](https://formation-fullstack.vercel.app/) · [API](https://formation-fullstack-production.up.railway.app/health) · [Swagger](https://formation-fullstack-production.up.railway.app/docs)
 
-Monorepo pédagogique : bases React → todo full-stack → **Guitar App** (Next.js + API FastAPI).
+Monorepo pédagogique : bases React → todo full-stack → **Guitar App** (Next.js + API FastAPI + IA).
 
 ## Projets
 
@@ -10,29 +10,43 @@ Monorepo pédagogique : bases React → todo full-stack → **Guitar App** (Next
 |---|---|
 | [`semaine-01-react-bases`](./semaine-01-react-bases/) | Bases React |
 | [`semaine-01-todo-app`](./semaine-01-todo-app/) | Todo app |
-| [`semaine-02-guitar-app`](./semaine-02-guitar-app/) | Front Next.js — manche, CAGED, presets, auth Google |
+| [`semaine-02-guitar-app`](./semaine-02-guitar-app/) | Front Next.js — manche, CAGED, presets, auth, thème clair/sombre |
 | [`semaine-03-guitar-api`](./semaine-03-guitar-api/) | API FastAPI — gammes, accords, harmonisation, progressions IA |
 
 ## Guitar App (projet principal)
 
-Application pour visualiser **gammes** et **accords** sur le manche. Logique musicale côté Python, UI et données utilisateur côté Next.js.
+Application pour visualiser **gammes** et **accords** sur le manche. Logique musicale côté Python, UI et données utilisateur côté Next.js, suggestions de progressions via LLM.
 
 ```
 ┌─────────────────────────────┐         ┌──────────────────────────────┐
 │  Next.js — Vercel           │  HTTP   │  FastAPI — Railway           │
 │  • Manche + CAGED           │ ──────► │  • Gammes / accords / degrés │
 │  • Auth Google (Auth.js)    │         │  • Harmonisation diatonique  │
-│  • Presets (Prisma + Neon)  │         │  • Progressions IA (Groq…)   │
+│  • Presets (Prisma + Neon)  │         │  • Progressions IA           │
+│  • Thème clair / sombre     │         │  • Groq / Ollama / OpenAI    │
 └─────────────────────────────┘         └──────────────────────────────┘
 ```
 
 ### Fonctionnalités clés
 
 - 22 gammes + degrés colorés sur le manche
-- Accords CAGED avec doigtés
-- Harmonisation diatonique (ou mode adapté pour blues / pentatoniques)
-- Suggestions de progressions par IA (avec fallback)
-- **Presets** (connecté) : gammes, accords, et progressions IA nommées
+- Accords CAGED avec doigtés et diagramme SVG
+- Harmonisation diatonique (mode adapté auto pour blues / pentatoniques)
+- Suggestions de progressions par IA (cache, rafraîchissement, fallback)
+- **Presets** (connecté) : gammes, accords CAGED, progressions IA nommées
+- **Thème clair / sombre** avec préférence mémorisée
+- **Persistance** de la sélection Gammes (tonique + échelle) entre les pages
+
+### Stack
+
+| Couche | Technologies |
+|---|---|
+| Front | **Next.js 16**, **React 19**, **TypeScript**, **Tailwind CSS v4** |
+| Auth | **Auth.js v5** (NextAuth) + Google OAuth |
+| Données | **Prisma 7**, **Neon** (Postgres), Server Actions |
+| API | **FastAPI**, **Pydantic**, **Uvicorn**, Python 3.12+, **pytest** |
+| IA | **Groq** (prod), **Ollama** (local), OpenAI optionnel |
+| Deploy | **Vercel** (front) + **Railway** (API) |
 
 ### Démarrage rapide
 

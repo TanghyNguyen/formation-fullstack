@@ -60,8 +60,11 @@ export default function FretBoard({
           {frets.map((fret) => (
             <span
               key={fret}
-              className="text-xs flex items-center justify-center font-semibold"
-              style={{ color: "var(--accent)" }}
+              className="text-xs flex items-center justify-center font-semibold rounded-full min-w-6 h-6 px-1.5 mx-auto"
+              style={{
+                background: "var(--string-label-bg)",
+                color: "var(--string-label-fg)",
+              }}
             >
               {fret}
             </span>
@@ -78,8 +81,8 @@ export default function FretBoard({
             <span
               className="h-full text-xs font-bold flex items-center justify-center rounded"
               style={{
-                background: "rgba(0, 0, 0, 0.25)",
-                color: "var(--accent)",
+                background: "var(--string-label-bg)",
+                color: "var(--string-label-fg)",
               }}
             >
               {guitarStringNumberFromSi(si)}

@@ -27,8 +27,6 @@ export default function ChordDiagram({
   const strGap = (W - 2 * pad) / 5;
   const fretH = 30;
   const topY = 38;
-  const mc = "#8a847a";
-  const tc = "#e8e4dc";
 
   const played = chordFrets.filter((f) => f > 0);
   const minF = played.length ? Math.min(...played) : 1;
@@ -58,13 +56,14 @@ export default function ChordDiagram({
     barreF < startFret + numFrets;
 
   const leftPad = startFret > 1 ? 14 : 0;
+  const woodGradientId = "chord-diagram-wood";
 
   return (
     <div
       className="shrink-0 flex flex-col items-center gap-2 rounded-lg py-4 px-4"
       style={{
         background: "var(--panel)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        border: "1px solid var(--border)",
       }}
     >
       <div
@@ -82,12 +81,18 @@ export default function ChordDiagram({
         height={H}
         className="block"
       >
+        <defs>
+          <linearGradient id={woodGradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--wood)" />
+            <stop offset="100%" stopColor="var(--wood-dark)" />
+          </linearGradient>
+        </defs>
         <rect
           x={-leftPad}
           y="0"
           width={W + leftPad}
           height={H}
-          fill="#2a1f17"
+          fill={`url(#${woodGradientId})`}
           rx="6"
         />
 
@@ -95,7 +100,7 @@ export default function ChordDiagram({
           <text
             x={pad - 12}
             y={topY + fretH / 2 + 4}
-            fill={mc}
+            fill="var(--muted)"
             fontSize={10}
             fontFamily="var(--font-mono)"
             textAnchor="end"
@@ -110,7 +115,7 @@ export default function ChordDiagram({
             y1={topY}
             x2={pad + 5 * strGap}
             y2={topY}
-            stroke={tc}
+            stroke="var(--text)"
             strokeWidth={4}
             strokeLinecap="round"
           />
@@ -123,7 +128,7 @@ export default function ChordDiagram({
             y1={topY + i * fretH}
             x2={pad + 5 * strGap}
             y2={topY + i * fretH}
-            stroke="rgba(255,255,255,0.15)"
+            stroke="var(--border-strong)"
             strokeWidth={1}
           />
         ))}
@@ -135,8 +140,9 @@ export default function ChordDiagram({
             y1={topY}
             x2={pad + s * strGap}
             y2={topY + numFrets * fretH}
-            stroke="rgba(255,255,255,0.25)"
+            stroke="var(--fret-wire)"
             strokeWidth={1.3 - s * 0.08}
+            opacity={0.55}
           />
         ))}
 
@@ -149,7 +155,8 @@ export default function ChordDiagram({
             }
             height={14}
             rx={7}
-            fill="rgba(255,255,255,0.35)"
+            fill="var(--fret-wire)"
+            opacity={0.45}
           />
         )}
 
@@ -162,7 +169,7 @@ export default function ChordDiagram({
                 key={s}
                 x={x}
                 y={topY - 10}
-                fill={mc}
+                fill="var(--muted)"
                 fontSize={13}
                 fontWeight={700}
                 fontFamily="var(--font-mono)"
@@ -181,13 +188,13 @@ export default function ChordDiagram({
                   cy={topY - 11}
                   r={5}
                   fill="none"
-                  stroke={tc}
+                  stroke="var(--text)"
                   strokeWidth={1.5}
                 />
                 <text
                   x={x}
                   y={topY - 8}
-                  fill={tc}
+                  fill="var(--text)"
                   fontSize={6}
                   fontFamily="var(--font-mono)"
                   textAnchor="middle"
@@ -210,7 +217,7 @@ export default function ChordDiagram({
               <text
                 x={x}
                 y={y + 3.5}
-                fill={"#0d1a2d"}
+                fill="var(--note-on)"
                 fontSize={8}
                 fontWeight={700}
                 fontFamily="var(--font-mono)"

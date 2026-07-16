@@ -56,8 +56,11 @@ export default function CagedFretboard({
           {frets.map((fret) => (
             <span
               key={fret}
-              className="text-xs flex items-center justify-center font-semibold"
-              style={{ color: "var(--accent)" }}
+              className="text-xs flex items-center justify-center font-semibold rounded-full min-w-6 h-6 px-1.5 mx-auto"
+              style={{
+                background: "var(--string-label-bg)",
+                color: "var(--string-label-fg)",
+              }}
             >
               {fret}
             </span>
@@ -75,8 +78,8 @@ export default function CagedFretboard({
             <span
               className="h-full text-xs font-bold flex items-center justify-center rounded"
               style={{
-                background: "rgba(0, 0, 0, 0.25)",
-                color: "var(--accent)",
+                background: "var(--string-label-bg)",
+                color: "var(--string-label-fg)",
               }}
             >
               {guitarStringNumberFromSi(si)}
@@ -96,9 +99,9 @@ export default function CagedFretboard({
                   style={{
                     background: degree
                       ? degreeStyles[degree].color
-                      : "rgba(20, 16, 12, 0.55)",
-                    color: isRoot || isActive ? "#0d1a2d" : "var(--muted)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                      : "var(--cell-idle)",
+                    color: isRoot || isActive ? "var(--note-on)" : "var(--muted)",
+                    border: "1px solid var(--border)",
                     opacity: isMuted ? 0.12 : 1,
                     boxShadow: isRoot
                       ? "0 0 0 2px rgba(255,107,74,0.5)"

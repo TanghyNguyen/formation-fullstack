@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+:root,
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
   --bg: #12100e;
   --panel: #1c1915;
   --wood: #3d2e22;
@@ -15,6 +16,37 @@
   --root: #ff6b4a;
   --scale: #4d96ff;
   --chord: #6bcb77;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --cell-idle: rgba(20, 16, 12, 0.55);
+  --bg-glow: #2a2218;
+  --note-on: #0d1a2d;
+  --string-label-bg: rgba(0, 0, 0, 0.35);
+  --string-label-fg: var(--accent);
+}
+
+[data-theme="light"] {
+  --background: #f4ebe0;
+  --foreground: #2a2218;
+  --bg: #ebe2d4;
+  --panel: #f7f0e6;
+  --wood: #c4a574;
+  --wood-dark: #dfd0b8;
+  --fret-wire: #6b6358;
+  --text: #2a2218;
+  --muted: #6b6358;
+  --accent: #b86e14;
+  --accent-dim: #8f5510;
+  --root: #d94a2e;
+  --scale: #2b6fd6;
+  --chord: #2f9d4a;
+  --border: rgba(42, 34, 24, 0.12);
+  --border-strong: rgba(42, 34, 24, 0.22);
+  --cell-idle: rgba(255, 255, 255, 0.55);
+  --bg-glow: #fff6e8;
+  --note-on: #0d1a2d;
+  --string-label-bg: #5c4634;
+  --string-label-fg: #fff6e8;
 }
 
 @theme inline {
@@ -24,15 +56,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: radial-gradient(ellipse 120% 80% at 50% -20%, #2a2218, var(--bg));
+  background: radial-gradient(
+    ellipse 120% 80% at 50% -20%,
+    var(--bg-glow),
+    var(--bg)
+  );
   color: var(--text);
   font-family: var(--font-geist-sans), Arial, sans-serif;
   min-height: 100vh;

@@ -177,7 +177,7 @@ export default function ChordsPageClient({
         className="flex flex-wrap gap-4 py-4 px-4 rounded-lg items-end mb-6"
         style={{
           background: "var(--panel)",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid var(--border)",
         }}
       >
         <label
@@ -189,7 +189,7 @@ export default function ChordsPageClient({
             style={{
               background: "var(--wood-dark)",
               color: "var(--text)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid var(--border-strong)",
             }}
             className="rounded-md px-3 py-2 text-sm"
             onChange={(e) =>
@@ -216,7 +216,7 @@ export default function ChordsPageClient({
             style={{
               background: "var(--wood-dark)",
               color: "var(--text)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid var(--border-strong)",
             }}
             className="rounded-md px-3 py-2 text-sm"
             value={chordType}
@@ -258,7 +258,7 @@ export default function ChordsPageClient({
                 style={{
                   background: "var(--wood-dark)",
                   color: "var(--text)",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  border: "1px solid var(--border-strong)",
                 }}
               />
             </label>
@@ -270,7 +270,7 @@ export default function ChordsPageClient({
               className="text-sm font-semibold px-3 py-2 rounded-md"
               style={{
                 color: "var(--accent)",
-                border: "1px solid rgba(255,255,255,0.15)",
+                border: "1px solid var(--border-strong)",
               }}
             >
               Sauvegarder
@@ -284,7 +284,7 @@ export default function ChordsPageClient({
       </div>
       <div
         className="flex rounded-[10px] overflow-hidden border mb-6 w-full"
-        style={{ borderColor: "rgba(255,255,255,0.08)" }}
+        style={{ borderColor: "var(--border)" }}
       >
         {CAGED.map((pos) => {
           const isAvailable = (positionsByType[chordType] ?? []).includes(pos);
@@ -300,7 +300,7 @@ export default function ChordsPageClient({
                 background:
                   pos === cagedPos ? "var(--accent)" : "var(--wood-dark)",
                 color: pos === cagedPos ? "#1a1208" : "var(--muted)",
-                borderRight: "1px solid rgba(255,255,255,0.06)",
+                borderRight: "1px solid var(--border)",
               }}
             >
               {pos}
@@ -355,7 +355,7 @@ export default function ChordsPageClient({
                   className="flex-1 text-left text-sm px-3 py-2 rounded-md"
                   style={{
                     background: "var(--wood-dark)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid var(--border)",
                     color: "var(--text)",
                   }}
                 >
@@ -382,7 +382,7 @@ export default function ChordsPageClient({
                   className="shrink-0 text-sm font-semibold px-3 py-2 rounded-md"
                   style={{
                     color: "var(--root)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    border: "1px solid var(--border-strong)",
                     opacity: isDeleting ? 0.6 : 1,
                     cursor: isDeleting ? "wait" : undefined,
                   }}
@@ -399,7 +399,7 @@ export default function ChordsPageClient({
         className="rounded-lg py-4 px-4 mt-6 flex flex-col gap-4"
         style={{
           background: "var(--panel)",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid var(--border)",
         }}
       >
         <h2>Bibliothèque d&apos;accords</h2>
@@ -416,7 +416,7 @@ export default function ChordsPageClient({
                     background:
                       key === chordType ? "var(--accent)" : "var(--wood-dark)",
                     color: key === chordType ? "#1a1208" : "var(--text)",
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    border: "1px solid var(--border-strong)",
                   }}
                 >
                   <span className="font-semibold">

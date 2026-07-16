@@ -31,9 +31,9 @@ export default function FretCell({
               ? "var(--root)"
               : isHighlighted
                 ? "var(--scale)"
-                : "rgba(20, 16, 12, 0.55)",
-        color: isRoot || isHighlighted ? "#0d1a2d" : "var(--muted)",
-        border: "1px solid rgba(255,255,255,0.06)",
+                : "var(--cell-idle)",
+        color: isRoot || isHighlighted ? "var(--note-on)" : "var(--muted)",
+        border: "1px solid var(--border)",
         boxShadow:
           degree === "1" || (!showDegrees && isRoot)
             ? "0 0 0 2px rgba(255,107,74,0.5)"

@@ -42,11 +42,14 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 - **Presets utilisateur** (Neon, compte Google) :
   - gamme (tonique + échelle)
   - **progression IA** : nom libre, accords + contexte gamme ; au rechargement, pas de nouvel appel IA tant qu’on ne rafraîchit pas
+- Persistance de la sélection (tonique, gamme, bémols, degrés) entre les pages
+- Thème clair / sombre (navbar)
 
 ### Page Accords (CAGED)
 
 - Types d'accords + positions via API
 - Doigtés calculés via API (`GET /chords/frets`)
+- Diagramme SVG thématisé (même bois que le manche)
 - Presets accords avec position CAGED
 
 ### Authentification
@@ -57,10 +60,11 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 
 | Couche | Technologie |
 |---|---|
-| Front | **Next.js 16**, React 19, Tailwind v4 |
-| API | **FastAPI**, Python 3.12+, Uvicorn |
+| Front | **Next.js 16**, React 19, TypeScript, Tailwind v4 |
+| API | **FastAPI**, Python 3.12+, Uvicorn, pytest |
 | Base | **Neon** Postgres, **Prisma 7** |
 | Auth | **Auth.js v5** + Google OAuth |
+| IA | Groq (prod) / Ollama (local) / OpenAI optionnel |
 | Deploy | **Vercel** (front) + **Railway** (API) |
 
 ## Démarrage local (2 terminaux)

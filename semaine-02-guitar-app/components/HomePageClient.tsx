@@ -19,6 +19,7 @@ import type { DegreeStyles } from "@/lib/music-types";
 import FretBoard from "@/components/FretBoard";
 import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
+import { readGammesPrefs, writeGammesPrefs } from "@/lib/gammes-prefs";
 
 type ScalePreset = {
   id: string;
@@ -70,6 +71,7 @@ export default function HomePageClient({
   const [useFlats, setUseFlats] = useState(false);
   const [highlightSet, setHighlightSet] = useState<Set<number>>(new Set());
   const [showDegrees, setShowDegrees] = useState(true);
+  const [prefsReady, setPrefsReady] = useState(false);
   const [isDeleting, startDelete] = useTransition();
   const [progressions, setProgressions] = useState<ChordProgression[]>([]);
   const [progressionsNotice, setProgressionsNotice] = useState<string | null>(
@@ -94,6 +96,29 @@ export default function HomePageClient({
   const progressionsBusy = isInitialLoad || isRefreshing;
   const latestProgressionsKey = useRef(progressionsKey);
   const forceRefreshRef = useRef(false);
+
+  useEffect(() => {
+    const saved = readGammesPrefs();
+    if (saved) {
+      setRootPc(saved.rootPc);
+      if (scales.some((scale) => scale.key === saved.currentScale)) {
+        setCurrentScale(saved.currentScale);
+      }
+      setUseFlats(saved.useFlats);
+      setShowDegrees(saved.showDegrees);
+    }
+    setPrefsReady(true);
+  }, [scales]);
+
+  useEffect(() => {
+    if (!prefsReady) return;
+    writeGammesPrefs({
+      rootPc,
+      currentScale,
+      useFlats,
+      showDegrees,
+    });
+  }, [prefsReady, rootPc, currentScale, useFlats, showDegrees]);
 
   useEffect(() => {
     latestProgressionsKey.current = progressionsKey;
@@ -265,7 +290,7 @@ export default function HomePageClient({
         className="flex flex-wrap gap-4 py-4 px-4 rounded-lg items-end mb-6"
         style={{
           background: "var(--panel)",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid var(--border)",
         }}
       >
         <label
@@ -277,7 +302,7 @@ export default function HomePageClient({
             style={{
               background: "var(--wood-dark)",
               color: "var(--text)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid var(--border-strong)",
             }}
             className="rounded-md px-3 py-2 text-sm"
             onChange={(e) => setRootPc(parseInt(e.target.value, 10))}
@@ -299,7 +324,7 @@ export default function HomePageClient({
             style={{
               background: "var(--wood-dark)",
               color: "var(--text)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid var(--border-strong)",
             }}
             className="rounded-md px-3 py-2 text-sm"
             onChange={(e) => setCurrentScale(e.target.value)}
@@ -322,7 +347,7 @@ export default function HomePageClient({
             style={{
               background: "var(--wood-dark)",
               color: "var(--text)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid var(--border-strong)",
             }}
             onChange={(e) => setUseFlats(e.target.checked)}
             checked={useFlats}
@@ -357,7 +382,7 @@ export default function HomePageClient({
                 style={{
                   background: "var(--wood-dark)",
                   color: "var(--text)",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  border: "1px solid var(--border-strong)",
                 }}
               />
             </label>
@@ -368,7 +393,7 @@ export default function HomePageClient({
               className="text-sm font-semibold px-3 py-2 rounded-md"
               style={{
                 color: "var(--accent)",
-                border: "1px solid rgba(255,255,255,0.15)",
+                border: "1px solid var(--border-strong)",
               }}
             >
               Sauvegarder
@@ -393,7 +418,7 @@ export default function HomePageClient({
         className="mt-8 rounded-lg py-4 px-4"
         style={{
           background: "var(--panel)",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid var(--border)",
         }}
       >
         <h2
@@ -438,7 +463,7 @@ export default function HomePageClient({
                         className="block rounded-md px-3 py-2 transition-opacity hover:opacity-90"
                         style={{
                           background: "var(--wood-dark)",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          border: "1px solid var(--border)",
                           color: "var(--text)",
                         }}
                         title="Voir cet accord sur le manche CAGED"
@@ -486,7 +511,7 @@ export default function HomePageClient({
                               className="text-sm px-3 py-2 rounded-md inline-block transition-opacity hover:opacity-90"
                               style={{
                                 background: "var(--wood-dark)",
-                                border: "1px solid rgba(255,255,255,0.08)",
+                                border: "1px solid var(--border)",
                                 color: "var(--text)",
                               }}
                               title="Voir cet accord sur le manche CAGED"
@@ -516,7 +541,7 @@ export default function HomePageClient({
         className="mt-8 rounded-lg py-4 px-4"
         style={{
           background: "var(--panel)",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid var(--border)",
         }}
       >
         <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
@@ -533,7 +558,7 @@ export default function HomePageClient({
             className="text-sm font-semibold px-3 py-1.5 rounded-md shrink-0"
             style={{
               color: "var(--accent)",
-              border: "1px solid rgba(255,255,255,0.15)",
+              border: "1px solid var(--border-strong)",
               opacity: progressionsBusy ? 0.5 : 1,
               cursor: progressionsBusy ? "wait" : "pointer",
             }}
@@ -587,7 +612,7 @@ export default function HomePageClient({
                       className="text-sm px-3 py-2 rounded-md inline-block transition-opacity hover:opacity-90"
                       style={{
                         background: "var(--wood-dark)",
-                        border: "1px solid rgba(255,255,255,0.08)",
+                        border: "1px solid var(--border)",
                         color: "var(--text)",
                         cursor: "pointer",
                       }}
@@ -620,7 +645,7 @@ export default function HomePageClient({
                       style={{
                         background: "var(--wood-dark)",
                         color: "var(--text)",
-                        border: "1px solid rgba(255,255,255,0.12)",
+                        border: "1px solid var(--border-strong)",
                       }}
                     />
                   </label>
@@ -645,7 +670,7 @@ export default function HomePageClient({
                     className="text-sm font-semibold px-3 py-2 rounded-md"
                     style={{
                       color: "var(--accent)",
-                      border: "1px solid rgba(255,255,255,0.15)",
+                      border: "1px solid var(--border-strong)",
                     }}
                   >
                     Enregistrer
@@ -678,7 +703,7 @@ export default function HomePageClient({
                     className="flex-1 text-left text-sm px-3 py-2 rounded-md"
                     style={{
                       background: "var(--wood-dark)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      border: "1px solid var(--border)",
                       color: "var(--text)",
                     }}
                   >
@@ -717,7 +742,7 @@ export default function HomePageClient({
                     className="shrink-0 text-sm font-semibold px-3 py-2 rounded-md"
                     style={{
                       color: "var(--root)",
-                      border: "1px solid rgba(255,255,255,0.15)",
+                      border: "1px solid var(--border-strong)",
                       opacity: isDeleting ? 0.6 : 1,
                       cursor: isDeleting ? "wait" : undefined,
                     }}
@@ -751,7 +776,7 @@ export default function HomePageClient({
                   className="flex-1 text-left text-sm px-3 py-2 rounded-md"
                   style={{
                     background: "var(--wood-dark)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid var(--border)",
                     color: "var(--text)",
                   }}
                 >
@@ -777,7 +802,7 @@ export default function HomePageClient({
                   className="shrink-0 text-sm font-semibold px-3 py-2 rounded-md"
                   style={{
                     color: "var(--root)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    border: "1px solid var(--border-strong)",
                     opacity: isDeleting ? 0.6 : 1,
                     cursor: isDeleting ? "wait" : undefined,
                   }}
