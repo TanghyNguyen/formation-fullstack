@@ -71,6 +71,8 @@ model Preset {
   scaleOrChord String
   type String
   cagedPos String?
+  description String?
+  chords Json?
   createdAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

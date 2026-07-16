@@ -4,6 +4,7 @@ import Link from "next/link";
 import type {
   ChordProgression,
   ChordProgressionsResponse,
+  ChordRecommendation,
   HarmonizedChord,
   ScaleHarmonizationResponse,
   ScaleInfo,
@@ -19,21 +20,41 @@ import FretBoard from "@/components/FretBoard";
 import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
 
+type ScalePreset = {
+  id: string;
+  name: string;
+  rootPc: number;
+  scaleOrChord: string;
+  type: string;
+};
+
+type ProgressionPreset = ScalePreset & {
+  description: string | null;
+  chords: unknown;
+};
+
+function parsePresetChords(chords: unknown): ChordRecommendation[] {
+  if (!Array.isArray(chords)) return [];
+  return chords.filter(
+    (chord): chord is ChordRecommendation =>
+      !!chord &&
+      typeof chord === "object" &&
+      typeof (chord as ChordRecommendation).root_pc === "number" &&
+      typeof (chord as ChordRecommendation).chord_type === "string",
+  );
+}
+
 export default function HomePageClient({
   isLoggedIn,
   presets,
+  progressionPresets,
   scales,
   degreeStyles,
   chordLabels,
 }: {
   isLoggedIn: boolean;
-  presets: {
-    id: string;
-    name: string;
-    rootPc: number;
-    scaleOrChord: string;
-    type: string;
-  }[];
+  presets: ScalePreset[];
+  progressionPresets: ProgressionPreset[];
   scales: ScaleInfo[];
   degreeStyles: DegreeStyles;
   chordLabels: Record<string, string>;
@@ -128,6 +149,11 @@ export default function HomePageClient({
     const forceRefresh = forceRefreshRef.current;
     forceRefreshRef.current = false;
 
+    // Skip auto-fetch when a saved progression was just restored for this key
+    if (!forceRefresh && progressionsLoadedKey === keyAtRequest) {
+      return;
+    }
+
     fetchChordProgressions(currentScale, rootPc, { forceRefresh })
       .then((data: ChordProgressionsResponse) => {
         if (cancelled) return;
@@ -194,13 +220,37 @@ export default function HomePageClient({
     return () => {
       cancelled = true;
     };
-  }, [currentScale, rootPc, progressionsKey, refreshToken]);
+  }, [
+    currentScale,
+    rootPc,
+    progressionsKey,
+    progressionsLoadedKey,
+    refreshToken,
+  ]);
 
   function handleRefreshProgressions() {
     if (progressionsBusy) return;
     forceRefreshRef.current = true;
     setIsRefreshing(true);
     setRefreshToken((token) => token + 1);
+  }
+
+  function loadProgressionPreset(preset: ProgressionPreset) {
+    const chords = parsePresetChords(preset.chords);
+    const key = `${preset.scaleOrChord}-${preset.rootPc}`;
+    setRootPc(preset.rootPc);
+    setCurrentScale(preset.scaleOrChord);
+    setProgressions([
+      {
+        name: preset.name,
+        description: preset.description ?? "",
+        chords,
+      },
+    ]);
+    setProgressionsLoadedKey(key);
+    setProgressionsNotice(null);
+    setProgressionsError(null);
+    setIsRefreshing(false);
   }
 
   return (
@@ -529,7 +579,7 @@ export default function HomePageClient({
               <p className="text-sm mb-2" style={{ color: "var(--muted)" }}>
                 {progression.description}
               </p>
-              <ol className="flex flex-wrap gap-2 list-none">
+              <ol className="flex flex-wrap gap-2 list-none mb-3">
                 {progression.chords.map((chord, index) => (
                   <li key={`${progression.name}-${index}`}>
                     <Link
@@ -552,9 +602,135 @@ export default function HomePageClient({
                   </li>
                 ))}
               </ol>
+              {isLoggedIn ? (
+                <form
+                  action={createPreset}
+                  className="flex flex-wrap gap-2 items-end"
+                >
+                  <label
+                    className="flex flex-col gap-1 text-sm"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    Nom de la progression
+                    <input
+                      name="name"
+                      required
+                      placeholder="Ex: Pop en Do"
+                      className="rounded-md px-3 py-2 text-sm"
+                      style={{
+                        background: "var(--wood-dark)",
+                        color: "var(--text)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                      }}
+                    />
+                  </label>
+                  <input type="hidden" name="rootPc" value={rootPc} />
+                  <input
+                    type="hidden"
+                    name="scaleOrChord"
+                    value={currentScale}
+                  />
+                  <input type="hidden" name="type" value="progression" />
+                  <input
+                    type="hidden"
+                    name="description"
+                    value={progression.description}
+                  />
+                  <input
+                    type="hidden"
+                    name="chords"
+                    value={JSON.stringify(progression.chords)}
+                  />
+                  <SubmitButton
+                    className="text-sm font-semibold px-3 py-2 rounded-md"
+                    style={{
+                      color: "var(--accent)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                    }}
+                  >
+                    Enregistrer
+                  </SubmitButton>
+                </form>
+              ) : (
+                <p className="text-sm" style={{ color: "var(--muted)" }}>
+                  Connecte-toi pour enregistrer cette progression.
+                </p>
+              )}
             </article>
           ))}
       </section>
+      {isLoggedIn && progressionPresets.length > 0 && (
+        <section className="mt-8">
+          <h2
+            className="text-xl font-bold mb-3"
+            style={{ color: "var(--accent)" }}
+          >
+            Mes progressions
+          </h2>
+          <ul className="flex flex-col gap-2">
+            {progressionPresets.map((preset) => {
+              const chords = parsePresetChords(preset.chords);
+              return (
+                <li key={preset.id} className="flex gap-2 items-stretch">
+                  <button
+                    type="button"
+                    onClick={() => loadProgressionPreset(preset)}
+                    className="flex-1 text-left text-sm px-3 py-2 rounded-md"
+                    style={{
+                      background: "var(--wood-dark)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      color: "var(--text)",
+                    }}
+                  >
+                    <span
+                      className="font-semibold"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      {preset.name}
+                    </span>
+                    {" — "}
+                    {NOTE_NAMES_SHARP[preset.rootPc]}{" "}
+                    {scaleLabels[preset.scaleOrChord] ?? preset.scaleOrChord}
+                    {chords.length > 0 && (
+                      <span
+                        className="block mt-1"
+                        style={{ color: "var(--muted)" }}
+                      >
+                        {chords
+                          .map(
+                            (chord) =>
+                              `${NOTE_NAMES_SHARP[chord.root_pc]} ${chordLabels[chord.chord_type] ?? chord.chord_type}`,
+                          )
+                          .join(" → ")}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => {
+                      if (!confirm(`Supprimer « ${preset.name} » ?`)) return;
+                      startDelete(async () => {
+                        await deletePreset(preset.id);
+                      });
+                    }}
+                    className="shrink-0 text-sm font-semibold px-3 py-2 rounded-md"
+                    style={{
+                      color: "var(--root)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      opacity: isDeleting ? 0.6 : 1,
+                      cursor: isDeleting ? "wait" : undefined,
+                    }}
+                    aria-label={`Supprimer ${preset.name}`}
+                  >
+                    {isDeleting ? "…" : "Supprimer"}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
       {isLoggedIn && presets.length > 0 && (
         <section className="mt-8">
           <h2

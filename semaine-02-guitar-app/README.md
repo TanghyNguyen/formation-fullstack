@@ -10,7 +10,7 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 ┌─────────────────────────────┐         ┌──────────────────────────────┐
 │  Next.js — Vercel           │  HTTP   │  FastAPI — Railway           │
 │  • UI React                 │ ──────► │  • Gammes / accords / degrés   │
-│  • Auth Google (Auth.js)    │         │  • Recommandations d'accords   │
+│  • Auth Google (Auth.js)    │         │  • Harmonisation + progressions│
 │  • Presets (Prisma + Neon)  │         │  • Tests pytest                │
 └─────────────────────────────┘         └──────────────────────────────┘
 ```
@@ -37,9 +37,11 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 - 22 gammes via API (`GET /scales`)
 - Notes surlignées via API (`GET /scales/{name}/notes`)
 - Degrés colorés (styles via `GET /degrees/styles`)
-- **Harmonisation diatonique** via API (`GET /scales/{name}/harmonization`) — 7 accords + progressions classiques
-- **Progressions IA** via API (`POST /recommend/chords`) — Phase 4
-- Presets utilisateur (Neon)
+- **Harmonisation diatonique** via API (`GET /scales/{name}/harmonization`) — 7 accords + progressions classiques (mode adapté auto pour blues / pentatoniques)
+- **Progressions IA** via API (`POST /recommend/chords`) — suggestions créatives + bouton Rafraîchir
+- **Presets utilisateur** (Neon, compte Google) :
+  - gamme (tonique + échelle)
+  - **progression IA** : nom libre, accords + contexte gamme ; au rechargement, pas de nouvel appel IA tant qu’on ne rafraîchit pas
 
 ### Page Accords (CAGED)
 
@@ -96,4 +98,4 @@ pnpm dev
 
 ---
 
-Formation full-stack — Phases 2 (full-stack Next.js) + 3 (API Python) + 4 (recommandations).
+Formation full-stack — Phases 2 (full-stack Next.js) + 3 (API Python) + 4 (recommandations IA + presets de progressions).

@@ -1,8 +1,8 @@
 # Guitar API — FastAPI
 
-API REST Python pour la logique musicale de [Guitar App](../semaine-02-guitar-app/).
+API REST Python pour la logique musicale de [Guitar App](../semaine-02-guitar-app/) (manche, CAGED, harmonisation, progressions IA). Les **presets** (gammes / accords / progressions sauvegardées) vivent côté Next.js + Neon, pas dans cette API.
 
-[Live API](https://formation-fullstack-production.up.railway.app/health) · [Swagger](https://formation-fullstack-production.up.railway.app/docs)
+[Live API](https://formation-fullstack-production.up.railway.app/health) · [Swagger](https://formation-fullstack-production.up.railway.app/docs) · [Front](https://formation-fullstack.vercel.app/)
 
 ## Stack
 

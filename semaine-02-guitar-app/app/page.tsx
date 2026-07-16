@@ -5,13 +5,20 @@ import HomePageClient from "@/components/HomePageClient";
 
 export default async function HomePage() {
   const session = await auth();
-  const presets = session?.user?.id
-    ? await prisma.preset.findMany({
-        where: { userId: session.user.id, type: "scale" },
-        orderBy: { createdAt: "desc" },
-      })
-    : [];
-  const isLoggedIn = !!session?.user?.id;
+  const userId = session?.user?.id;
+  const [presets, progressionPresets] = userId
+    ? await Promise.all([
+        prisma.preset.findMany({
+          where: { userId, type: "scale" },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.preset.findMany({
+          where: { userId, type: "progression" },
+          orderBy: { createdAt: "desc" },
+        }),
+      ])
+    : [[], []];
+  const isLoggedIn = !!userId;
   const [scales, degreeStyles, chordTypes] = await Promise.all([
     fetchScales(),
     fetchDegreeStyles(),
@@ -25,6 +32,7 @@ export default async function HomePage() {
     <HomePageClient
       isLoggedIn={isLoggedIn}
       presets={presets}
+      progressionPresets={progressionPresets}
       scales={scales}
       degreeStyles={degreeStyles}
       chordLabels={chordLabels}
