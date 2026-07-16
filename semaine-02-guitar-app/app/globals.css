@@ -56,16 +56,22 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  background-color: var(--bg);
+}
+
 body {
-  background: radial-gradient(
+  background-color: var(--bg);
+  background-image: radial-gradient(
     ellipse 120% 80% at 50% -20%,
     var(--bg-glow),
     var(--bg)
   );
+  background-repeat: no-repeat;
+  background-size: 100% 100vh;
   color: var(--text);
   font-family: var(--font-geist-sans), Arial, sans-serif;
   min-height: 100vh;
-  background-attachment: fixed;
 }
 
 button:not(:disabled),
