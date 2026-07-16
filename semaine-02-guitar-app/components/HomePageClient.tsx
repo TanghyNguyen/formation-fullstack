@@ -1,8 +1,18 @@
 "use client";
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import type { ChordProgression, ChordProgressionsResponse, ScaleInfo } from "@/lib/guitar-api";
-import { fetchChordProgressions, fetchScaleNotes } from "@/lib/guitar-api";
+import type {
+  ChordProgression,
+  ChordProgressionsResponse,
+  HarmonizedChord,
+  ScaleHarmonizationResponse,
+  ScaleInfo,
+} from "@/lib/guitar-api";
+import {
+  fetchChordProgressions,
+  fetchScaleHarmonization,
+  fetchScaleNotes,
+} from "@/lib/guitar-api";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
 import type { DegreeStyles } from "@/lib/music-types";
 import FretBoard from "@/components/FretBoard";
@@ -52,6 +62,11 @@ export default function HomePageClient({
   >(null);
   const [refreshToken, setRefreshToken] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [harmonization, setHarmonization] =
+    useState<ScaleHarmonizationResponse | null>(null);
+  const [harmonizationError, setHarmonizationError] = useState<string | null>(
+    null,
+  );
   const progressionsKey = `${currentScale}-${rootPc}`;
   const isInitialLoad =
     progressionsLoadedKey !== progressionsKey && !isRefreshing;
@@ -62,6 +77,30 @@ export default function HomePageClient({
   useEffect(() => {
     latestProgressionsKey.current = progressionsKey;
   }, [progressionsKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchScaleHarmonization(currentScale, rootPc)
+      .then((data) => {
+        if (!cancelled) {
+          setHarmonization(data);
+          setHarmonizationError(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHarmonization(null);
+          setHarmonizationError(
+            "Impossible de charger l’harmonisation diatonique.",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentScale, rootPc]);
 
   useEffect(() => {
     let cancelled = false;
@@ -307,6 +346,129 @@ export default function HomePageClient({
           border: "1px solid rgba(255,255,255,0.06)",
         }}
       >
+        <h2
+          className="text-xl font-bold mb-1"
+          style={{ color: "var(--accent)" }}
+        >
+          Harmonisation
+          {harmonization?.mode === "adapted"
+            ? " adaptée"
+            : " diatonique"}
+        </h2>
+        <p className="text-sm mb-1" style={{ color: "var(--muted)" }}>
+          {harmonization?.mode === "adapted"
+            ? "Gamme à moins de 7 notes : accords et progressions adaptés automatiquement."
+            : "Règles théoriques (empilement de tierces) — distinct des suggestions IA ci-dessous."}
+        </p>
+        {harmonizationError && (
+          <p className="text-sm" style={{ color: "var(--root)" }}>
+            {harmonizationError}
+          </p>
+        )}
+        {harmonization && (
+          <>
+            <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
+              {harmonization.explanation}
+            </p>
+            {harmonization.available && harmonization.chords.length > 0 && (
+              <>
+                <h3
+                  className="font-semibold mb-2"
+                  style={{ color: "var(--text)" }}
+                >
+                  {harmonization.mode === "adapted"
+                    ? "Accords compatibles"
+                    : "Les 7 accords diatoniques"}
+                </h3>
+                <ul className="flex flex-col gap-2 mb-6 list-none">
+                  {harmonization.chords.map((chord: HarmonizedChord) => (
+                    <li key={chord.degree}>
+                      <Link
+                        href={`/chords?root_pc=${chord.root_pc}&chord_type=${encodeURIComponent(chord.chord_type)}`}
+                        className="block rounded-md px-3 py-2 transition-opacity hover:opacity-90"
+                        style={{
+                          background: "var(--wood-dark)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          color: "var(--text)",
+                        }}
+                        title="Voir cet accord sur le manche CAGED"
+                      >
+                        <span className="font-semibold">
+                          {chord.roman} — {NOTE_NAMES_SHARP[chord.root_pc]}{" "}
+                          {chordLabels[chord.chord_type] ?? chord.quality_label}
+                        </span>
+                        <span
+                          className="block text-sm mt-0.5"
+                          style={{ color: "var(--muted)" }}
+                        >
+                          {chord.explanation}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <h3
+                  className="font-semibold mb-2"
+                  style={{ color: "var(--text)" }}
+                >
+                  Progressions courantes
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {harmonization.progressions.map((progression) => (
+                    <article key={progression.name}>
+                      <h4
+                        className="font-semibold mb-1"
+                        style={{ color: "var(--text)" }}
+                      >
+                        {progression.name}
+                      </h4>
+                      <p
+                        className="text-sm mb-2"
+                        style={{ color: "var(--muted)" }}
+                      >
+                        {progression.description}
+                      </p>
+                      <ol className="flex flex-wrap gap-2 list-none">
+                        {progression.chords.map((chord, index) => (
+                          <li key={`${progression.name}-${index}`}>
+                            <Link
+                              href={`/chords?root_pc=${chord.root_pc}&chord_type=${encodeURIComponent(chord.chord_type)}`}
+                              className="text-sm px-3 py-2 rounded-md inline-block transition-opacity hover:opacity-90"
+                              style={{
+                                background: "var(--wood-dark)",
+                                border: "1px solid rgba(255,255,255,0.08)",
+                                color: "var(--text)",
+                              }}
+                              title="Voir cet accord sur le manche CAGED"
+                            >
+                              {NOTE_NAMES_SHARP[chord.root_pc]}{" "}
+                              {chordLabels[chord.chord_type] ??
+                                chord.chord_type}
+                              {chord.roman ? (
+                                <span className="opacity-70">
+                                  {" "}
+                                  ({chord.roman})
+                                </span>
+                              ) : null}
+                            </Link>
+                          </li>
+                        ))}
+                      </ol>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </section>
+      <section
+        className="mt-8 rounded-lg py-4 px-4"
+        style={{
+          background: "var(--panel)",
+          border: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
         <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
           <h2
             className="text-xl font-bold"
@@ -330,11 +492,11 @@ export default function HomePageClient({
           </button>
         </div>
         <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
-          Suggestions pour{" "}
+          Suggestions créatives (IA) pour{" "}
           <strong style={{ color: "var(--text)" }}>
             {NOTE_NAMES_SHARP[rootPc]} {scaleLabels[currentScale] ?? currentScale}
           </strong>
-          .
+          — en complément de l’harmonisation ci-dessus.
         </p>
         {progressionsBusy && (
           <p className="text-sm mb-3" style={{ color: "var(--muted)" }}>

@@ -28,12 +28,22 @@ uvicorn main:app --reload --port 8000
 | `GET` | `/health` | Santé de l'API |
 | `GET` | `/scales` | Liste des gammes |
 | `GET` | `/scales/{name}/notes?root_pc=0` | Pitch classes |
+| `GET` | `/scales/{name}/harmonization?root_pc=0` | Harmonisation diatonique (7 accords + progressions) |
 | `GET` | `/chords/types` | Types d'accords CAGED |
 | `GET` | `/chords/library` | Bibliothèque groupée |
 | `GET` | `/chords/frets?root_pc=0&chord_type=M&position=E` | Doigté |
 | `GET` | `/degrees/styles` | Couleurs et labels des degrés |
 | `GET` | `/degrees/at?pc=4&root_pc=0` | Degré d'une note |
-| `POST` | `/recommend/chords` | Progressions d'accords générées par **OpenAI** |
+| `POST` | `/recommend/chords` | Progressions d'accords générées par IA (Groq / Ollama / OpenAI) |
+
+### Exemple harmonisation diatonique
+
+```bash
+curl "https://formation-fullstack-production.up.railway.app/scales/major/harmonization?root_pc=0"
+```
+
+- Gamme à **7 notes** → harmonisation diatonique (`mode: "diatonic"`)
+- Gamme à **moins de 7 notes** (blues, pentatonique, égyptienne…) → bascule auto en mode adapté (`mode: "adapted"`, ex. I7–IV7–V7 pour le blues)
 
 ### Configuration IA
 
@@ -82,6 +92,7 @@ main.py        Routes FastAPI + CORS
 scales.py      Gammes et intervalles
 caged.py       Formes CAGED et calcul des frettes
 degrees.py     Degrés et styles couleur
+harmonize.py   Harmonisation diatonique (triades + progressions)
 recommend_ai.py  Progressions IA (Ollama / Groq / OpenAI)
 llm_provider.py  Configuration fournisseur LLM
 recommend_fallback.py  Secours rule-based

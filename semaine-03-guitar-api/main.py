@@ -15,6 +15,7 @@ from caged import (
     list_chord_types,
 )
 from degrees import DEGREE_STYLES, chord_degree
+from harmonize import harmonize_scale
 from recommend_ai import recommend_progressions_ai
 from recommend_fallback import recommend_progressions_fallback
 
@@ -75,6 +76,16 @@ def scale_notes(
         "root_pc": root_pc,
         "pitch_classes": pitch_classes_from_root(root_pc, intervals),
     }
+
+
+@app.get("/scales/{name}/harmonization")
+def scale_harmonization(
+    name: str,
+    root_pc: int = Query(..., ge=0, le=11, alias="root_pc"),
+):
+    if name not in SCALES:
+        raise HTTPException(status_code=404, detail=f"Scale '{name}' not found")
+    return harmonize_scale(name, root_pc)
 
 
 @app.get("/chords/types")

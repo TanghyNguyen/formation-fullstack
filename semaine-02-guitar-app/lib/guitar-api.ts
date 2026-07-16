@@ -53,6 +53,26 @@ export type ChordProgressionsResponse = {
   progressions: ChordProgression[];
 };
 
+export type HarmonizedChord = {
+  degree: number;
+  roman: string;
+  root_pc: number;
+  chord_type: string;
+  note_names: string[];
+  quality_label: string;
+  explanation: string;
+};
+
+export type ScaleHarmonizationResponse = {
+  scale_key: string;
+  root_pc: number;
+  explanation: string;
+  available: boolean;
+  mode?: "diatonic" | "adapted" | "none";
+  chords: HarmonizedChord[];
+  progressions: ChordProgression[];
+};
+
 function getApiUrl(): string {
   const url =
     process.env.GUITAR_API_URL ??
@@ -88,6 +108,22 @@ export async function fetchScaleNotes(
 
   const data: ScaleNotesResponse = await res.json();
   return data.pitch_classes;
+}
+
+export async function fetchScaleHarmonization(
+  scaleKey: string,
+  rootPc: number,
+): Promise<ScaleHarmonizationResponse> {
+  const res = await fetch(
+    `${getApiUrl()}/scales/${scaleKey}/harmonization?root_pc=${rootPc}`,
+    { cache: "no-store" },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch harmonization: ${res.status}`);
+  }
+
+  return res.json();
 }
 
 export async function fetchChordTypes(): Promise<ChordTypeInfo[]> {

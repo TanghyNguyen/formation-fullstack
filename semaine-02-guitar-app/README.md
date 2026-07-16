@@ -37,7 +37,8 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 - 22 gammes via API (`GET /scales`)
 - Notes surlignées via API (`GET /scales/{name}/notes`)
 - Degrés colorés (styles via `GET /degrees/styles`)
-- **Accords suggérés** via API (`POST /recommend/chords`) — Phase 4
+- **Harmonisation diatonique** via API (`GET /scales/{name}/harmonization`) — 7 accords + progressions classiques
+- **Progressions IA** via API (`POST /recommend/chords`) — Phase 4
 - Presets utilisateur (Neon)
 
 ### Page Accords (CAGED)
