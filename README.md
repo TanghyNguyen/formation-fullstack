@@ -62,3 +62,7 @@ cd semaine-02-guitar-app && pnpm install && pnpm dev
 ```
 
 Détails, variables d’environnement et déploiement : voir les README de chaque dossier.
+
+### CI
+
+GitHub Actions sur `main` / PR : **pytest** (API) + **TypeScript typecheck** (front).

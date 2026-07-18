@@ -98,10 +98,19 @@ pnpm dev
 | `GUITAR_API_URL` | API serveur (`http://127.0.0.1:8000`) |
 | `NEXT_PUBLIC_GUITAR_API_URL` | API client (`http://127.0.0.1:8000`) |
 
+## Scripts utiles
+
+```bash
+pnpm typecheck   # tsc --noEmit (aussi lancé en CI)
+pnpm lint
+pnpm build
+```
+
 ## Déploiement
 
 - **Vercel** : Root Directory = `semaine-02-guitar-app` + toutes les variables ci-dessus
 - **Railway** : Root Directory = `semaine-03-guitar-api` + Procfile
+- **CI** : GitHub Actions (`.github/workflows/ci.yml`) — pytest API + typecheck front
 
 ---
 
