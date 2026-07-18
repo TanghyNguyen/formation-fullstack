@@ -109,12 +109,29 @@ def _templates_for_scale(scale_key: str) -> list[tuple[str, str, list[int]]]:
     return _PROGRESSION_TEMPLATES["major"]
 
 
-def recommend_progressions_fallback(scale_key: str, root_pc: int) -> dict:
+def _resize_degrees(degrees: list[int], chord_count: int) -> list[int]:
+    if chord_count <= 0:
+        return []
+    if len(degrees) >= chord_count:
+        return degrees[:chord_count]
+    resized = list(degrees)
+    while len(resized) < chord_count:
+        resized.append(degrees[len(resized) % len(degrees)])
+    return resized
+
+
+def recommend_progressions_fallback(
+    scale_key: str,
+    root_pc: int,
+    *,
+    chord_count: int = 4,
+) -> dict:
     intervals = SCALES.get(scale_key)
     if intervals is None:
         return {
             "scale_key": scale_key,
             "root_pc": root_pc,
+            "chord_count": chord_count,
             "source": "rules",
             "progressions": [],
         }
@@ -129,10 +146,11 @@ def recommend_progressions_fallback(scale_key: str, root_pc: int) -> dict:
 
     progressions = []
     for name, description, degrees in templates:
+        sized = _resize_degrees(degrees, chord_count)
         if scale_key == "blues":
-            chords = [_chord(pcs, d, "7", romans[d % len(romans)]) for d in degrees]
+            chords = [_chord(pcs, d, "7", romans[d % len(romans)]) for d in sized]
         else:
-            chords = [at(d) for d in degrees]
+            chords = [at(d) for d in sized]
         progressions.append(
             {"name": name, "description": description, "chords": chords}
         )
@@ -140,6 +158,7 @@ def recommend_progressions_fallback(scale_key: str, root_pc: int) -> dict:
     return {
         "scale_key": scale_key,
         "root_pc": root_pc,
+        "chord_count": chord_count,
         "source": "rules",
         "progressions": progressions,
     }

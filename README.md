@@ -10,7 +10,7 @@ Monorepo pédagogique : bases React → todo full-stack → **Guitar App** (Next
 |---|---|
 | [`semaine-01-react-bases`](./semaine-01-react-bases/) | Bases React |
 | [`semaine-01-todo-app`](./semaine-01-todo-app/) | Todo app |
-| [`semaine-02-guitar-app`](./semaine-02-guitar-app/) | Front Next.js — manche, CAGED, presets, auth, thème clair/sombre |
+| [`semaine-02-guitar-app`](./semaine-02-guitar-app/) | Front Next.js — manche, CAGED, presets, auth, thème, lecture de progressions |
 | [`semaine-03-guitar-api`](./semaine-03-guitar-api/) | API FastAPI — gammes, accords, harmonisation, progressions IA |
 
 ## Guitar App (projet principal)
@@ -23,7 +23,8 @@ Application pour visualiser **gammes** et **accords** sur le manche. Logique mus
 │  • Manche + CAGED           │ ──────► │  • Gammes / accords / degrés │
 │  • Auth Google (Auth.js)    │         │  • Harmonisation diatonique  │
 │  • Presets (Prisma + Neon)  │         │  • Progressions IA           │
-│  • Thème clair / sombre     │         │  • Groq / Ollama / OpenAI    │
+│  • Lecture + son (Web Audio)│         │  • Groq / Ollama / OpenAI    │
+│  • Thème clair / sombre     │         │                              │
 └─────────────────────────────┘         └──────────────────────────────┘
 ```
 
@@ -32,10 +33,11 @@ Application pour visualiser **gammes** et **accords** sur le manche. Logique mus
 - 22 gammes + degrés colorés sur le manche
 - Accords CAGED avec doigtés et diagramme SVG
 - Harmonisation diatonique (mode adapté auto pour blues / pentatoniques)
-- Suggestions de progressions par IA (cache, rafraîchissement, fallback)
+- Suggestions de progressions par IA (cache, rafraîchissement, longueur 3–8 accords, fallback)
+- **Mode lecture** : enchaîner une progression avec son, BPM, boucle et métronome
 - **Presets** (connecté) : gammes, accords CAGED, progressions IA nommées
 - **Thème clair / sombre** avec préférence mémorisée
-- **Persistance** de la sélection Gammes (tonique + échelle) entre les pages
+- **Persistance** des sélections Gammes et Accords entre les pages
 
 ### Stack
 

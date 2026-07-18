@@ -51,7 +51,10 @@ def _sanitize_chord(step: ChordStep) -> ChordStep | None:
     return step
 
 
-def _sanitize_progressions(payload: ProgressionsPayload) -> list[dict]:
+def _sanitize_progressions(
+    payload: ProgressionsPayload,
+    chord_count: int,
+) -> list[dict]:
     cleaned: list[dict] = []
     for progression in payload.progressions:
         chords = []
@@ -59,6 +62,8 @@ def _sanitize_progressions(payload: ProgressionsPayload) -> list[dict]:
             sanitized = _sanitize_chord(step)
             if sanitized:
                 chords.append(sanitized.model_dump())
+        if len(chords) > chord_count:
+            chords = chords[:chord_count]
         if len(chords) >= 3:
             cleaned.append(
                 {
@@ -121,7 +126,7 @@ def _align_progressions_to_root(
     return aligned
 
 
-def _build_prompt(scale_key: str, root_pc: int) -> str:
+def _build_prompt(scale_key: str, root_pc: int, chord_count: int) -> str:
     intervals = SCALES[scale_key]
     scale_notes = [NOTE_NAMES_SHARP[pc] for pc in scale_degrees_from_root(root_pc, intervals)]
     highlight_notes = [NOTE_NAMES_SHARP[pc] for pc in pitch_classes_from_root(root_pc, intervals)]
@@ -147,7 +152,7 @@ Contexte :
 - Types d'accords autorisés : {chord_types}
 
 Tâche :
-Propose exactement 2 progressions d'accords (4 à 6 accords chacune) cohérentes avec **cette gamme précise** ({scale_label} en {root_name}).
+Propose exactement 2 progressions d'accords de **exactement {chord_count} accords chacune** cohérentes avec **cette gamme précise** ({scale_label} en {root_name}).
 Les accords doivent respecter l'harmonie de cette gamme — pas une autre.
 Chaque `root_pc` DOIT être une des pitch classes diatoniques : {", ".join(str(pc) for pc in scale_degrees_from_root(root_pc, intervals))}.
 L'accord de tonique (I/i) DOIT avoir root_pc={root_pc} ({root_name}).
@@ -166,6 +171,7 @@ Réponds UNIQUEMENT en JSON valide avec ce schéma :
 }}
 
 Règles :
+- Chaque progression DOIT contenir exactement {chord_count} accords (ni plus, ni moins)
 - root_pc entier entre 0 et 11, parmi les notes de la gamme
 - chord_type parmi la liste autorisée
 - roman en chiffres romains (I, ii, V7, etc.)
@@ -182,8 +188,14 @@ def _cache_enabled() -> bool:
     return os.getenv("PROGRESSIONS_CACHE", "true").lower() in {"1", "true", "yes"}
 
 
-def _cache_key(scale_key: str, root_pc: int, provider_name: str, model: str) -> str:
-    return f"{provider_name}:{model}:{scale_key}:{root_pc}"
+def _cache_key(
+    scale_key: str,
+    root_pc: int,
+    provider_name: str,
+    model: str,
+    chord_count: int,
+) -> str:
+    return f"{provider_name}:{model}:{scale_key}:{root_pc}:{chord_count}"
 
 
 def recommend_progressions_ai(
@@ -191,9 +203,13 @@ def recommend_progressions_ai(
     root_pc: int,
     *,
     force_refresh: bool = False,
+    chord_count: int = 4,
 ) -> dict:
+    if chord_count < 3 or chord_count > 8:
+        raise ValueError("chord_count must be between 3 and 8")
+
     provider = resolve_llm_provider()
-    key = _cache_key(scale_key, root_pc, provider.name, provider.model)
+    key = _cache_key(scale_key, root_pc, provider.name, provider.model, chord_count)
 
     if (
         not force_refresh
@@ -206,7 +222,7 @@ def recommend_progressions_ai(
             result["cached"] = True
             return result
 
-    prompt = _build_prompt(scale_key, root_pc)
+    prompt = _build_prompt(scale_key, root_pc, chord_count)
     if force_refresh:
         prompt += (
             "\n\nIMPORTANT : propose des progressions DIFFÉRENTES "
@@ -260,7 +276,7 @@ def recommend_progressions_ai(
     except (json.JSONDecodeError, ValidationError) as exc:
         raise RuntimeError(f"Invalid AI response: {exc}") from exc
 
-    progressions = _sanitize_progressions(payload)
+    progressions = _sanitize_progressions(payload, chord_count)
     scale_pcs = set(scale_degrees_from_root(root_pc, SCALES[scale_key]))
     progressions = _align_progressions_to_root(progressions, root_pc, scale_pcs)
     if not progressions:
@@ -269,6 +285,7 @@ def recommend_progressions_ai(
     result = {
         "scale_key": scale_key,
         "root_pc": root_pc,
+        "chord_count": chord_count,
         "source": provider.name,
         "model": provider.model,
         "progressions": progressions,

@@ -38,11 +38,12 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 - Notes surlignées via API (`GET /scales/{name}/notes`)
 - Degrés colorés (styles via `GET /degrees/styles`)
 - **Harmonisation diatonique** via API (`GET /scales/{name}/harmonization`) — 7 accords + progressions classiques (mode adapté auto pour blues / pentatoniques)
-- **Progressions IA** via API (`POST /recommend/chords`) — suggestions créatives + bouton Rafraîchir
+- **Progressions IA** via API (`POST /recommend/chords`) — suggestions créatives, bouton Rafraîchir, choix du **nombre d’accords** (3–8)
+- **Mode lecture** : bouton **Lire** sur progressions IA, progressions courantes (harmonisation) et presets → page Accords avec enchaînement + son (Web Audio), BPM, boucle, métronome
 - **Presets utilisateur** (Neon, compte Google) :
   - gamme (tonique + échelle)
   - **progression IA** : nom libre, accords + contexte gamme ; au rechargement, pas de nouvel appel IA tant qu’on ne rafraîchit pas
-- Persistance de la sélection (tonique, gamme, bémols, degrés) entre les pages
+- Persistance de la sélection (tonique, gamme, bémols, degrés, nombre d’accords IA) entre les pages
 - Thème clair / sombre (navbar)
 
 ### Page Accords (CAGED)
@@ -50,7 +51,9 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 - Types d'accords + positions via API
 - Doigtés calculés via API (`GET /chords/frets`)
 - Diagramme SVG thématisé (même bois que le manche)
+- Persistance de la sélection (fondamentale, type, position CAGED)
 - Presets accords avec position CAGED
+- Lecteur de progression (quand lancé depuis Gammes)
 
 ### Authentification
 
@@ -102,4 +105,4 @@ pnpm dev
 
 ---
 
-Formation full-stack — Phases 2 (full-stack Next.js) + 3 (API Python) + 4 (recommandations IA + presets de progressions).
+Formation full-stack — Phases 2–4 + mode lecture de progressions (entraînement).

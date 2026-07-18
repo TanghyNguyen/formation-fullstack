@@ -76,8 +76,10 @@ ollama pull llama3.1:8b         # ou un modèle déjà installé
 ```bash
 curl -X POST "https://formation-fullstack-production.up.railway.app/recommend/chords" \
   -H "Content-Type: application/json" \
-  -d '{"scale_key":"major","root_pc":0}'
+  -d '{"scale_key":"major","root_pc":0,"chord_count":4}'
 ```
+
+Corps JSON : `scale_key`, `root_pc` (0–11), `force_refresh` (optionnel), `chord_count` (3–8, défaut 4).
 
 ## Tests
 

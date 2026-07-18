@@ -32,3 +32,9 @@ def test_fallback_mixolydian_has_bVII():
     result = recommend_progressions_fallback("mixolydian", 7)
     romans = [c["roman"] for c in result["progressions"][0]["chords"]]
     assert "bVII" in romans
+
+
+def test_fallback_respects_chord_count():
+    result = recommend_progressions_fallback("major", 0, chord_count=6)
+    assert result["chord_count"] == 6
+    assert all(len(p["chords"]) == 6 for p in result["progressions"])

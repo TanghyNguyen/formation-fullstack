@@ -1,15 +1,38 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import { useSearchParams } from "next/navigation";
-import type { ChordLibraryGroup, ChordTypeInfo } from "@/lib/guitar-api";
+import type {
+  ChordLibraryGroup,
+  ChordRecommendation,
+  ChordTypeInfo,
+} from "@/lib/guitar-api";
 import { fetchChordFrets } from "@/lib/guitar-api";
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
 import type { CagedPosition, ChordType, DegreeStyles } from "@/lib/music-types";
 import CagedFretboard from "@/components/CagedFretboard";
 import ChordDiagram from "@/components/ChordDiagram";
+import ProgressionPlayer from "@/components/ProgressionPlayer";
 import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
+import {
+  getAccordsPrefsSnapshot,
+  getServerAccordsPrefsSnapshot,
+  subscribeAccordsPrefs,
+  writeAccordsPrefs,
+  type AccordsPrefs,
+} from "@/lib/accords-prefs";
+import {
+  clearPlaybackProgression,
+  loadPlaybackProgression,
+  type PlaybackProgression,
+} from "@/lib/progression-playback";
 
 const CAGED: readonly CagedPosition[] = ["C", "A", "G", "E", "D"];
 
@@ -86,6 +109,10 @@ export default function ChordsPageClient({
     chordTypes.map((chord) => [chord.key, chord.positions]),
   );
   const defaultChordType = (chordTypes[0]?.key as ChordType) ?? "M";
+  const validChordTypes = useMemo(
+    () => chordTypes.map((chord) => chord.key),
+    [chordTypes],
+  );
   const searchParams = useSearchParams();
 
   const urlParams = useMemo(
@@ -99,43 +126,96 @@ export default function ChordsPageClient({
     [searchParams, intervalsByType, positionsByType, defaultChordType],
   );
 
-  const [selection, setSelection] = useState({
-    rootPc: 0,
-    chordType: defaultChordType,
-    cagedPos: "E" as CagedPosition,
-  });
+  const storedPrefs = useSyncExternalStore(
+    subscribeAccordsPrefs,
+    () =>
+      getAccordsPrefsSnapshot(
+        defaultChordType,
+        validChordTypes,
+        positionsByType,
+      ),
+    () => getServerAccordsPrefsSnapshot(defaultChordType),
+  );
+
   const [syncedUrlKey, setSyncedUrlKey] = useState<string | null>(null);
+  const [urlOverride, setUrlOverride] = useState<AccordsPrefs | null>(null);
 
   if (urlParams && urlParams.key !== syncedUrlKey) {
     setSyncedUrlKey(urlParams.key);
-    setSelection({
+    setUrlOverride({
       rootPc: urlParams.rootPc,
       chordType: urlParams.chordType,
       cagedPos: urlParams.cagedPos,
+      useFlats: storedPrefs.useFlats,
     });
+  } else if (!urlParams && syncedUrlKey !== null) {
+    setSyncedUrlKey(null);
+    setUrlOverride(null);
   }
 
-  const { rootPc, chordType, cagedPos } = selection;
-  const [useFlats, setUseFlats] = useState(false);
+  useEffect(() => {
+    if (!urlParams) return;
+    writeAccordsPrefs({
+      rootPc: urlParams.rootPc,
+      chordType: urlParams.chordType,
+      cagedPos: urlParams.cagedPos,
+      useFlats: storedPrefs.useFlats,
+    });
+    // Persist deep-links once per URL key; avoid looping on object identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when URL chord target changes
+  }, [urlParams?.key]);
+
+  const prefs = urlOverride ?? storedPrefs;
+  const { rootPc, chordType, cagedPos, useFlats } = prefs;
+
+  function updatePrefs(patch: Partial<AccordsPrefs>) {
+    const next = { ...prefs, ...patch };
+    setUrlOverride(null);
+    writeAccordsPrefs(next);
+  }
+
   const [chordFrets, setChordFrets] = useState<number[] | null>(null);
   const [isDeleting, startDelete] = useTransition();
+  const [playback, setPlayback] = useState<PlaybackProgression | null>(null);
+
+  useEffect(() => {
+    setPlayback(loadPlaybackProgression());
+  }, []);
 
   function handleChordTypeChange(next: ChordType) {
     const positions = positionsByType[next] ?? [];
-    setSelection((current) => ({
-      rootPc: current.rootPc,
+    updatePrefs({
       chordType: next,
-      cagedPos: positions.includes(current.cagedPos)
-        ? current.cagedPos
+      cagedPos: positions.includes(cagedPos)
+        ? cagedPos
         : firstAvailablePosition(next, positionsByType),
-    }));
+    });
+  }
+
+  function handlePlaybackChord(chord: ChordRecommendation) {
+    const nextType = intervalsByType[chord.chord_type]
+      ? (chord.chord_type as ChordType)
+      : defaultChordType;
+    const positions = positionsByType[nextType] ?? [];
+    updatePrefs({
+      rootPc: chord.root_pc,
+      chordType: nextType,
+      cagedPos: positions.includes(cagedPos)
+        ? cagedPos
+        : firstAvailablePosition(nextType, positionsByType),
+    });
+  }
+
+  function handleExitPlayback() {
+    clearPlaybackProgression();
+    setPlayback(null);
   }
 
   function loadPreset(preset: (typeof presets)[number]) {
     const nextType = preset.scaleOrChord as ChordType;
     const savedPos = preset.cagedPos as CagedPosition | null;
     const positions = positionsByType[nextType] ?? [];
-    setSelection({
+    updatePrefs({
       rootPc: preset.rootPc,
       chordType: nextType,
       cagedPos:
@@ -173,6 +253,15 @@ export default function ChordsPageClient({
       >
         Accords — CAGED
       </h1>
+      {playback && (
+        <ProgressionPlayer
+          progression={playback}
+          chordLabels={chordLabels}
+          intervalsByType={intervalsByType}
+          onChordChange={handlePlaybackChord}
+          onExit={handleExitPlayback}
+        />
+      )}
       <div
         className="flex flex-wrap gap-4 py-4 px-4 rounded-lg items-end mb-6"
         style={{
@@ -193,10 +282,7 @@ export default function ChordsPageClient({
             }}
             className="rounded-md px-3 py-2 text-sm"
             onChange={(e) =>
-              setSelection((current) => ({
-                ...current,
-                rootPc: Number.parseInt(e.target.value, 10),
-              }))
+              updatePrefs({ rootPc: Number.parseInt(e.target.value, 10) })
             }
             value={rootPc}
           >
@@ -237,7 +323,7 @@ export default function ChordsPageClient({
           <input
             type="checkbox"
             checked={useFlats}
-            onChange={(e) => setUseFlats(e.target.checked)}
+            onChange={(e) => updatePrefs({ useFlats: e.target.checked })}
           />
         </label>
         {isLoggedIn ? (
@@ -282,6 +368,7 @@ export default function ChordsPageClient({
           </p>
         )}
       </div>
+
       <div
         className="flex rounded-[10px] overflow-hidden border mb-6 w-full"
         style={{ borderColor: "var(--border)" }}
@@ -291,10 +378,9 @@ export default function ChordsPageClient({
           return (
             <button
               key={pos}
+              type="button"
               disabled={!isAvailable}
-              onClick={() =>
-                setSelection((current) => ({ ...current, cagedPos: pos }))
-              }
+              onClick={() => updatePrefs({ cagedPos: pos })}
               className="flex-1 py-2.5 font-mono font-semibold text-base transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
               style={{
                 background:
@@ -311,6 +397,7 @@ export default function ChordsPageClient({
           );
         })}
       </div>
+
       <div className="flex flex-col lg:flex-row gap-4 items-start">
         {chordFrets ? (
           <>
@@ -338,6 +425,7 @@ export default function ChordsPageClient({
           </p>
         )}
       </div>
+
       {isLoggedIn && presets.length > 0 && (
         <section className="mt-8">
           <h2
@@ -395,6 +483,7 @@ export default function ChordsPageClient({
           </ul>
         </section>
       )}
+
       <div
         className="rounded-lg py-4 px-4 mt-6 flex flex-col gap-4"
         style={{
@@ -402,14 +491,25 @@ export default function ChordsPageClient({
           border: "1px solid var(--border)",
         }}
       >
-        <h2>Bibliothèque d&apos;accords</h2>
+        <h2
+          className="text-xl font-bold"
+          style={{ color: "var(--accent)" }}
+        >
+          Bibliothèque d&apos;accords
+        </h2>
         {libraryGroups.map((group) => (
           <div key={group.title}>
-            <h3>{group.title}</h3>
+            <h3
+              className="text-sm font-semibold mb-2 uppercase tracking-wide"
+              style={{ color: "var(--muted)" }}
+            >
+              {group.title}
+            </h3>
             <div className="flex flex-wrap gap-2">
               {group.keys.map((key) => (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => handleChordTypeChange(key as ChordType)}
                   className="rounded-md px-3 py-2 text-sm flex flex-col gap-1 text-left"
                   style={{

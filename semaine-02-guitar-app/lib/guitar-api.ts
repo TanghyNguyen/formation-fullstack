@@ -187,7 +187,7 @@ export async function fetchDegreeStyles(): Promise<DegreeStyles> {
 export async function fetchChordProgressions(
   scaleKey: string,
   rootPc: number,
-  options?: { forceRefresh?: boolean },
+  options?: { forceRefresh?: boolean; chordCount?: number },
 ): Promise<ChordProgressionsResponse> {
   const res = await fetch(`${getApiUrl()}/recommend/chords`, {
     method: "POST",
@@ -196,6 +196,7 @@ export async function fetchChordProgressions(
       scale_key: scaleKey,
       root_pc: rootPc,
       force_refresh: options?.forceRefresh ?? false,
+      chord_count: options?.chordCount ?? 4,
     }),
     cache: "no-store",
   });

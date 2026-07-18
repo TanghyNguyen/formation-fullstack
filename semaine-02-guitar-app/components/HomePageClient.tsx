@@ -1,6 +1,14 @@
 "use client";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type {
   ChordProgression,
   ChordProgressionsResponse,
@@ -19,7 +27,14 @@ import type { DegreeStyles } from "@/lib/music-types";
 import FretBoard from "@/components/FretBoard";
 import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
-import { readGammesPrefs, writeGammesPrefs } from "@/lib/gammes-prefs";
+import {
+  CHORD_COUNT_OPTIONS,
+  getGammesPrefsSnapshot,
+  getServerGammesPrefsSnapshot,
+  subscribeGammesPrefs,
+  writeGammesPrefs,
+} from "@/lib/gammes-prefs";
+import { savePlaybackProgression } from "@/lib/progression-playback";
 
 type ScalePreset = {
   id: string;
@@ -66,12 +81,36 @@ export default function HomePageClient({
   const scaleIntervals = Object.fromEntries(
     scales.map((scale) => [scale.key, scale.intervals]),
   );
-  const [rootPc, setRootPc] = useState(0);
-  const [currentScale, setCurrentScale] = useState(scales[0]?.key ?? "major");
-  const [useFlats, setUseFlats] = useState(false);
+  const router = useRouter();
+  const fallbackScale = scales[0]?.key ?? "major";
+  const validScaleKeys = useMemo(
+    () => scales.map((scale) => scale.key),
+    [scales],
+  );
+  const prefs = useSyncExternalStore(
+    subscribeGammesPrefs,
+    () => getGammesPrefsSnapshot(fallbackScale, validScaleKeys),
+    () => getServerGammesPrefsSnapshot(fallbackScale),
+  );
+  const { rootPc, currentScale, useFlats, showDegrees, chordCount } = prefs;
+
+  function setRootPc(next: number) {
+    writeGammesPrefs({ ...prefs, rootPc: next });
+  }
+  function setCurrentScale(next: string) {
+    writeGammesPrefs({ ...prefs, currentScale: next });
+  }
+  function setUseFlats(next: boolean) {
+    writeGammesPrefs({ ...prefs, useFlats: next });
+  }
+  function setShowDegrees(next: boolean) {
+    writeGammesPrefs({ ...prefs, showDegrees: next });
+  }
+  function setChordCount(next: number) {
+    writeGammesPrefs({ ...prefs, chordCount: next });
+  }
+
   const [highlightSet, setHighlightSet] = useState<Set<number>>(new Set());
-  const [showDegrees, setShowDegrees] = useState(true);
-  const [prefsReady, setPrefsReady] = useState(false);
   const [isDeleting, startDelete] = useTransition();
   const [progressions, setProgressions] = useState<ChordProgression[]>([]);
   const [progressionsNotice, setProgressionsNotice] = useState<string | null>(
@@ -90,35 +129,12 @@ export default function HomePageClient({
   const [harmonizationError, setHarmonizationError] = useState<string | null>(
     null,
   );
-  const progressionsKey = `${currentScale}-${rootPc}`;
+  const progressionsKey = `${currentScale}-${rootPc}-${chordCount}`;
   const isInitialLoad =
     progressionsLoadedKey !== progressionsKey && !isRefreshing;
   const progressionsBusy = isInitialLoad || isRefreshing;
   const latestProgressionsKey = useRef(progressionsKey);
   const forceRefreshRef = useRef(false);
-
-  useEffect(() => {
-    const saved = readGammesPrefs();
-    if (saved) {
-      setRootPc(saved.rootPc);
-      if (scales.some((scale) => scale.key === saved.currentScale)) {
-        setCurrentScale(saved.currentScale);
-      }
-      setUseFlats(saved.useFlats);
-      setShowDegrees(saved.showDegrees);
-    }
-    setPrefsReady(true);
-  }, [scales]);
-
-  useEffect(() => {
-    if (!prefsReady) return;
-    writeGammesPrefs({
-      rootPc,
-      currentScale,
-      useFlats,
-      showDegrees,
-    });
-  }, [prefsReady, rootPc, currentScale, useFlats, showDegrees]);
 
   useEffect(() => {
     latestProgressionsKey.current = progressionsKey;
@@ -179,13 +195,16 @@ export default function HomePageClient({
       return;
     }
 
-    fetchChordProgressions(currentScale, rootPc, { forceRefresh })
+    fetchChordProgressions(currentScale, rootPc, {
+      forceRefresh,
+      chordCount,
+    })
       .then((data: ChordProgressionsResponse) => {
         if (cancelled) return;
         // Ignore les réponses obsolètes (changement rapide de fondamentale/gamme)
         if (latestProgressionsKey.current !== keyAtRequest) return;
         if (
-          `${data.scale_key}-${data.root_pc}` !== keyAtRequest
+          `${data.scale_key}-${data.root_pc}-${chordCount}` !== keyAtRequest
         ) {
           return;
         }
@@ -248,6 +267,7 @@ export default function HomePageClient({
   }, [
     currentScale,
     rootPc,
+    chordCount,
     progressionsKey,
     progressionsLoadedKey,
     refreshToken,
@@ -262,9 +282,12 @@ export default function HomePageClient({
 
   function loadProgressionPreset(preset: ProgressionPreset) {
     const chords = parsePresetChords(preset.chords);
-    const key = `${preset.scaleOrChord}-${preset.rootPc}`;
-    setRootPc(preset.rootPc);
-    setCurrentScale(preset.scaleOrChord);
+    writeGammesPrefs({
+      ...prefs,
+      rootPc: preset.rootPc,
+      currentScale: preset.scaleOrChord,
+    });
+    const key = `${preset.scaleOrChord}-${preset.rootPc}-${prefs.chordCount}`;
     setProgressions([
       {
         name: preset.name,
@@ -276,6 +299,12 @@ export default function HomePageClient({
     setProgressionsNotice(null);
     setProgressionsError(null);
     setIsRefreshing(false);
+  }
+
+  function startPlayback(name: string, chords: ChordRecommendation[]) {
+    if (chords.length === 0) return;
+    savePlaybackProgression({ name, chords });
+    router.push("/chords");
   }
 
   return (
@@ -503,7 +532,7 @@ export default function HomePageClient({
                       >
                         {progression.description}
                       </p>
-                      <ol className="flex flex-wrap gap-2 list-none">
+                      <ol className="flex flex-wrap gap-2 list-none mb-2">
                         {progression.chords.map((chord, index) => (
                           <li key={`${progression.name}-${index}`}>
                             <Link
@@ -529,6 +558,19 @@ export default function HomePageClient({
                           </li>
                         ))}
                       </ol>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          startPlayback(progression.name, progression.chords)
+                        }
+                        className="text-sm font-semibold px-3 py-2 rounded-md"
+                        style={{
+                          background: "var(--accent)",
+                          color: "#1a1208",
+                        }}
+                      >
+                        Lire
+                      </button>
                     </article>
                   ))}
                 </div>
@@ -544,34 +586,63 @@ export default function HomePageClient({
           border: "1px solid var(--border)",
         }}
       >
-        <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-1">
           <h2
             className="text-xl font-bold"
             style={{ color: "var(--accent)" }}
           >
             Progressions d&apos;accords (IA)
           </h2>
-          <button
-            type="button"
-            onClick={handleRefreshProgressions}
-            disabled={progressionsBusy}
-            className="text-sm font-semibold px-3 py-1.5 rounded-md shrink-0"
-            style={{
-              color: "var(--accent)",
-              border: "1px solid var(--border-strong)",
-              opacity: progressionsBusy ? 0.5 : 1,
-              cursor: progressionsBusy ? "wait" : "pointer",
-            }}
-          >
-            {isRefreshing ? "Rafraîchissement…" : "Rafraîchir"}
-          </button>
+          <div className="flex flex-wrap items-end gap-2">
+            <label
+              className="flex flex-col gap-1 text-sm"
+              style={{ color: "var(--muted)" }}
+            >
+              Accords
+              <select
+                value={chordCount}
+                disabled={progressionsBusy}
+                onChange={(e) =>
+                  setChordCount(parseInt(e.target.value, 10))
+                }
+                className="rounded-md px-3 py-1.5 text-sm"
+                style={{
+                  background: "var(--wood-dark)",
+                  color: "var(--text)",
+                  border: "1px solid var(--border-strong)",
+                  opacity: progressionsBusy ? 0.5 : 1,
+                }}
+              >
+                {CHORD_COUNT_OPTIONS.map((count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={handleRefreshProgressions}
+              disabled={progressionsBusy}
+              className="text-sm font-semibold px-3 py-1.5 rounded-md shrink-0"
+              style={{
+                color: "var(--accent)",
+                border: "1px solid var(--border-strong)",
+                opacity: progressionsBusy ? 0.5 : 1,
+                cursor: progressionsBusy ? "wait" : "pointer",
+              }}
+            >
+              {isRefreshing ? "Rafraîchissement…" : "Rafraîchir"}
+            </button>
+          </div>
         </div>
         <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
           Suggestions créatives (IA) pour{" "}
           <strong style={{ color: "var(--text)" }}>
             {NOTE_NAMES_SHARP[rootPc]} {scaleLabels[currentScale] ?? currentScale}
           </strong>
-          — en complément de l’harmonisation ci-dessus.
+          — {chordCount} accords par progression, en complément de
+          l’harmonisation ci-dessus.
         </p>
         {progressionsBusy && (
           <p className="text-sm mb-3" style={{ color: "var(--muted)" }}>
@@ -627,6 +698,21 @@ export default function HomePageClient({
                   </li>
                 ))}
               </ol>
+              <div className="flex flex-wrap gap-2 items-end mb-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    startPlayback(progression.name, progression.chords)
+                  }
+                  className="text-sm font-semibold px-3 py-2 rounded-md"
+                  style={{
+                    background: "var(--accent)",
+                    color: "#1a1208",
+                  }}
+                >
+                  Lire
+                </button>
+              </div>
               {isLoggedIn ? (
                 <form
                   action={createPreset}
@@ -732,6 +818,19 @@ export default function HomePageClient({
                   </button>
                   <button
                     type="button"
+                    disabled={chords.length === 0}
+                    onClick={() => startPlayback(preset.name, chords)}
+                    className="shrink-0 text-sm font-semibold px-3 py-2 rounded-md"
+                    style={{
+                      background: "var(--accent)",
+                      color: "#1a1208",
+                      opacity: chords.length === 0 ? 0.5 : 1,
+                    }}
+                  >
+                    Lire
+                  </button>
+                  <button
+                    type="button"
                     disabled={isDeleting}
                     onClick={() => {
                       if (!confirm(`Supprimer « ${preset.name} » ?`)) return;
@@ -770,8 +869,11 @@ export default function HomePageClient({
                 <button
                   type="button"
                   onClick={() => {
-                    setRootPc(preset.rootPc);
-                    setCurrentScale(preset.scaleOrChord);
+                    writeGammesPrefs({
+                      ...prefs,
+                      rootPc: preset.rootPc,
+                      currentScale: preset.scaleOrChord,
+                    });
                   }}
                   className="flex-1 text-left text-sm px-3 py-2 rounded-md"
                   style={{

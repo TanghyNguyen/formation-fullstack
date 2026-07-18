@@ -147,6 +147,7 @@ class RecommendRequest(BaseModel):
     scale_key: str
     root_pc: int = Field(..., ge=0, le=11)
     force_refresh: bool = False
+    chord_count: int = Field(4, ge=3, le=8)
 
 
 @app.post("/recommend/chords")
@@ -161,11 +162,16 @@ def recommend_chords_for_scale(body: RecommendRequest):
             body.scale_key,
             body.root_pc,
             force_refresh=body.force_refresh,
+            chord_count=body.chord_count,
         )
     except RuntimeError as exc:
         message = str(exc)
         if os.getenv("OPENAI_FALLBACK", "true").lower() in {"1", "true", "yes"}:
-            fallback = recommend_progressions_fallback(body.scale_key, body.root_pc)
+            fallback = recommend_progressions_fallback(
+                body.scale_key,
+                body.root_pc,
+                chord_count=body.chord_count,
+            )
             if fallback["progressions"]:
                 fallback["ai_error"] = message
                 return fallback
