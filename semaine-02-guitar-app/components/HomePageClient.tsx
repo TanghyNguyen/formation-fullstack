@@ -558,19 +558,79 @@ export default function HomePageClient({
                           </li>
                         ))}
                       </ol>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          startPlayback(progression.name, progression.chords)
-                        }
-                        className="text-sm font-semibold px-3 py-2 rounded-md"
-                        style={{
-                          background: "var(--accent)",
-                          color: "#1a1208",
-                        }}
-                      >
-                        Lire
-                      </button>
+                      <div className="flex flex-wrap gap-2 items-end mb-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            startPlayback(
+                              progression.name,
+                              progression.chords,
+                            )
+                          }
+                          className="text-sm font-semibold px-3 py-2 rounded-md"
+                          style={{
+                            background: "var(--accent)",
+                            color: "#1a1208",
+                          }}
+                        >
+                          Lire
+                        </button>
+                      </div>
+                      {isLoggedIn ? (
+                        <form
+                          action={createPreset}
+                          className="flex flex-wrap gap-2 items-end"
+                        >
+                          <label
+                            className="flex flex-col gap-1 text-sm"
+                            style={{ color: "var(--muted)" }}
+                          >
+                            Nom de la progression
+                            <input
+                              name="name"
+                              required
+                              defaultValue={progression.name}
+                              placeholder="Ex: I–V–vi–IV"
+                              className="rounded-md px-3 py-2 text-sm"
+                              style={{
+                                background: "var(--wood-dark)",
+                                color: "var(--text)",
+                                border: "1px solid var(--border-strong)",
+                              }}
+                            />
+                          </label>
+                          <input type="hidden" name="rootPc" value={rootPc} />
+                          <input
+                            type="hidden"
+                            name="scaleOrChord"
+                            value={currentScale}
+                          />
+                          <input type="hidden" name="type" value="progression" />
+                          <input
+                            type="hidden"
+                            name="description"
+                            value={progression.description}
+                          />
+                          <input
+                            type="hidden"
+                            name="chords"
+                            value={JSON.stringify(progression.chords)}
+                          />
+                          <SubmitButton
+                            className="text-sm font-semibold px-3 py-2 rounded-md"
+                            style={{
+                              color: "var(--accent)",
+                              border: "1px solid var(--border-strong)",
+                            }}
+                          >
+                            Enregistrer
+                          </SubmitButton>
+                        </form>
+                      ) : (
+                        <p className="text-sm" style={{ color: "var(--muted)" }}>
+                          Connecte-toi pour enregistrer cette progression.
+                        </p>
+                      )}
                     </article>
                   ))}
                 </div>
