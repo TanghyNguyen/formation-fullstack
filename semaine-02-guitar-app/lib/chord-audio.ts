@@ -24,6 +24,16 @@ function getContext(): AudioContext | null {
   return sharedContext;
 }
 
+export function chordGainFromVolume(volume0to100: number): number {
+  const v = Math.min(100, Math.max(0, volume0to100));
+  return (v / 100) * 0.25;
+}
+
+export function clickGainFromVolume(volume0to100: number): number {
+  const v = Math.min(100, Math.max(0, volume0to100));
+  return (v / 100) * 0.12;
+}
+
 export async function ensureAudioReady(): Promise<boolean> {
   const ctx = getContext();
   if (!ctx) return false;
@@ -75,17 +85,23 @@ export function playChord(
   });
 }
 
-/** Soft metronome click. */
-export function playClick(options?: { gain?: number }): void {
+/** Soft metronome click; accent = lower pitch, ×1.5 gain. */
+export function playClick(options?: { gain?: number; accent?: boolean }): void {
   const ctx = getContext();
   if (!ctx) return;
   const now = ctx.currentTime;
+  const accent = options?.accent === true;
+  const base = options?.gain ?? 0.06;
+  const level = accent ? base * 1.5 : base;
+  const freq = accent ? 660 : 1000;
+  if (level <= 0) return;
+
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = "sine";
-  osc.frequency.setValueAtTime(880, now);
+  osc.frequency.setValueAtTime(freq, now);
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(options?.gain ?? 0.06, now + 0.005);
+  gain.gain.exponentialRampToValueAtTime(Math.max(level, 0.0001), now + 0.005);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
   osc.connect(gain);
   gain.connect(ctx.destination);
