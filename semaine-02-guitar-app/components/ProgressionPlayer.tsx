@@ -90,6 +90,14 @@ export default function ProgressionPlayer({
     setBeatsDraft(String(beatsPerChord));
   }, [beatsPerChord]);
 
+  // If beats/chord shrinks mid-play, clamp display + ref so counter stays valid.
+  useEffect(() => {
+    if (beatRef.current > beatsPerChord) {
+      beatRef.current = beatsPerChord;
+      setBeat(beatsPerChord);
+    }
+  }, [beatsPerChord]);
+
   useEffect(() => {
     onChordChangeRef.current = onChordChange;
   }, [onChordChange]);

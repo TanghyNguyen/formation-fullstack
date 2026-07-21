@@ -61,6 +61,8 @@ export function playChord(
 
   const duration = options?.durationSec ?? 1.4;
   const baseGain = options?.gain ?? 0.12;
+  // exponentialRamp rejects ≤0; volume 0 must be silent without throwing.
+  if (baseGain <= 0) return;
   const now = ctx.currentTime;
   const root = rootMidi(rootPc);
 
