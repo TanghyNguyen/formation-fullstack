@@ -1,4 +1,5 @@
 import type { DegreeStyles } from "@/lib/music-types";
+import type { Locale } from "@/lib/locale";
 
 export type ScaleInfo = {
   key: string;
@@ -81,9 +82,16 @@ function getApiUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export async function fetchScales(): Promise<ScaleInfo[]> {
-  const res = await fetch(`${getApiUrl()}/scales`, {
-    next: { revalidate: 3600 },
+function withLocale(path: string, locale?: Locale): string {
+  if (!locale) return path;
+  const sep = path.includes("?") ? "&" : "?";
+  return `${path}${sep}locale=${locale}`;
+}
+
+export async function fetchScales(locale?: Locale): Promise<ScaleInfo[]> {
+  const res = await fetch(withLocale(`${getApiUrl()}/scales`, locale), {
+    next: { revalidate: 0 },
+    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -113,9 +121,13 @@ export async function fetchScaleNotes(
 export async function fetchScaleHarmonization(
   scaleKey: string,
   rootPc: number,
+  locale?: Locale,
 ): Promise<ScaleHarmonizationResponse> {
   const res = await fetch(
-    `${getApiUrl()}/scales/${scaleKey}/harmonization?root_pc=${rootPc}`,
+    withLocale(
+      `${getApiUrl()}/scales/${scaleKey}/harmonization?root_pc=${rootPc}`,
+      locale,
+    ),
     { cache: "no-store" },
   );
 
@@ -126,9 +138,12 @@ export async function fetchScaleHarmonization(
   return res.json();
 }
 
-export async function fetchChordTypes(): Promise<ChordTypeInfo[]> {
-  const res = await fetch(`${getApiUrl()}/chords/types`, {
-    next: { revalidate: 3600 },
+export async function fetchChordTypes(
+  locale?: Locale,
+): Promise<ChordTypeInfo[]> {
+  const res = await fetch(withLocale(`${getApiUrl()}/chords/types`, locale), {
+    next: { revalidate: 0 },
+    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -138,10 +153,16 @@ export async function fetchChordTypes(): Promise<ChordTypeInfo[]> {
   return res.json();
 }
 
-export async function fetchChordLibrary(): Promise<ChordLibraryGroup[]> {
-  const res = await fetch(`${getApiUrl()}/chords/library`, {
-    next: { revalidate: 3600 },
-  });
+export async function fetchChordLibrary(
+  locale?: Locale,
+): Promise<ChordLibraryGroup[]> {
+  const res = await fetch(
+    withLocale(`${getApiUrl()}/chords/library`, locale),
+    {
+      next: { revalidate: 0 },
+      cache: "no-store",
+    },
+  );
 
   if (!res.ok) {
     throw new Error(`Failed to fetch chord library: ${res.status}`);
@@ -187,7 +208,11 @@ export async function fetchDegreeStyles(): Promise<DegreeStyles> {
 export async function fetchChordProgressions(
   scaleKey: string,
   rootPc: number,
-  options?: { forceRefresh?: boolean; chordCount?: number },
+  options?: {
+    forceRefresh?: boolean;
+    chordCount?: number;
+    locale?: Locale;
+  },
 ): Promise<ChordProgressionsResponse> {
   const res = await fetch(`${getApiUrl()}/recommend/chords`, {
     method: "POST",
@@ -197,6 +222,7 @@ export async function fetchChordProgressions(
       root_pc: rootPc,
       force_refresh: options?.forceRefresh ?? false,
       chord_count: options?.chordCount ?? 4,
+      locale: options?.locale ?? "fr",
     }),
     cache: "no-store",
   });

@@ -33,6 +33,12 @@ import {
   loadPlaybackProgression,
   type PlaybackProgression,
 } from "@/lib/progression-playback";
+import { t } from "@/lib/i18n";
+import type { Locale } from "@/lib/locale";
+import {
+  getLocaleSnapshot,
+  subscribeLocale,
+} from "@/lib/locale";
 
 const CAGED: readonly CagedPosition[] = ["C", "A", "G", "E", "D"];
 
@@ -85,6 +91,7 @@ export default function ChordsPageClient({
   chordTypes,
   libraryGroups,
   degreeStyles,
+  locale: localeProp,
 }: {
   isLoggedIn: boolean;
   presets: {
@@ -98,7 +105,14 @@ export default function ChordsPageClient({
   chordTypes: ChordTypeInfo[];
   libraryGroups: ChordLibraryGroup[];
   degreeStyles: DegreeStyles;
+  locale: Locale;
 }) {
+  const liveLocale = useSyncExternalStore(
+    subscribeLocale,
+    getLocaleSnapshot,
+    () => localeProp,
+  );
+  const locale = liveLocale || localeProp;
   const chordLabels = Object.fromEntries(
     chordTypes.map((chord) => [chord.key, chord.label]),
   );
@@ -139,6 +153,9 @@ export default function ChordsPageClient({
 
   const [syncedUrlKey, setSyncedUrlKey] = useState<string | null>(null);
   const [urlOverride, setUrlOverride] = useState<AccordsPrefs | null>(null);
+  const [chordFrets, setChordFrets] = useState<number[] | null>(null);
+  const [isDeleting, startDelete] = useTransition();
+  const [playback, setPlayback] = useState<PlaybackProgression | null>(null);
 
   if (urlParams && urlParams.key !== syncedUrlKey) {
     setSyncedUrlKey(urlParams.key);
@@ -154,13 +171,19 @@ export default function ChordsPageClient({
   }
 
   useEffect(() => {
-    if (!urlParams) return;
-    writeAccordsPrefs({
-      rootPc: urlParams.rootPc,
-      chordType: urlParams.chordType,
-      cagedPos: urlParams.cagedPos,
-      useFlats: storedPrefs.useFlats,
-    });
+    if (urlParams) {
+      // Deep-link to a specific chord wins over a leftover progression player.
+      clearPlaybackProgression();
+      setPlayback(null);
+      writeAccordsPrefs({
+        rootPc: urlParams.rootPc,
+        chordType: urlParams.chordType,
+        cagedPos: urlParams.cagedPos,
+        useFlats: storedPrefs.useFlats,
+      });
+      return;
+    }
+    setPlayback(loadPlaybackProgression());
     // Persist deep-links once per URL key; avoid looping on object identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only when URL chord target changes
   }, [urlParams?.key]);
@@ -173,15 +196,6 @@ export default function ChordsPageClient({
     setUrlOverride(null);
     writeAccordsPrefs(next);
   }
-
-  const [chordFrets, setChordFrets] = useState<number[] | null>(null);
-  const [isDeleting, startDelete] = useTransition();
-  const [playback, setPlayback] = useState<PlaybackProgression | null>(null);
-
-  useEffect(() => {
-    setPlayback(loadPlaybackProgression());
-  }, []);
-
   function handleChordTypeChange(next: ChordType) {
     const positions = positionsByType[next] ?? [];
     updatePrefs({
@@ -251,7 +265,7 @@ export default function ChordsPageClient({
         className="text-3xl font-bold mb-2"
         style={{ color: "var(--accent)" }}
       >
-        Accords — CAGED
+        {t(locale, "chords.title")}
       </h1>
       {playback && (
         <ProgressionPlayer
@@ -260,6 +274,7 @@ export default function ChordsPageClient({
           intervalsByType={intervalsByType}
           onChordChange={handlePlaybackChord}
           onExit={handleExitPlayback}
+          locale={locale}
         />
       )}
       <div
@@ -273,7 +288,7 @@ export default function ChordsPageClient({
           className="flex flex-col gap-1 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
-          Fondamentale
+          {t(locale, "chords.root")}
           <select
             style={{
               background: "var(--wood-dark)",
@@ -297,7 +312,7 @@ export default function ChordsPageClient({
           className="flex flex-col gap-1 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
-          Type d&apos;accord
+          {t(locale, "chords.type")}
           <select
             style={{
               background: "var(--wood-dark)",
@@ -319,7 +334,7 @@ export default function ChordsPageClient({
           className="flex flex-row items-center gap-2 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
-          Bémols
+          {t(locale, "chords.flats")}
           <input
             type="checkbox"
             checked={useFlats}
@@ -335,11 +350,11 @@ export default function ChordsPageClient({
               className="flex flex-col gap-1 text-sm"
               style={{ color: "var(--muted)" }}
             >
-              Nom du preset
+              {t(locale, "chords.presetName")}
               <input
                 name="name"
                 required
-                placeholder="Ex: Am7 en Do"
+                placeholder={t(locale, "chords.presetPlaceholder")}
                 className="rounded-md px-3 py-2 text-sm"
                 style={{
                   background: "var(--wood-dark)",
@@ -359,7 +374,7 @@ export default function ChordsPageClient({
                 border: "1px solid var(--border-strong)",
               }}
             >
-              Sauvegarder
+              {t(locale, "chords.save")}
             </SubmitButton>
           </form>
         ) : (
@@ -432,7 +447,7 @@ export default function ChordsPageClient({
             className="text-xl font-bold mb-3"
             style={{ color: "var(--accent)" }}
           >
-            Mes presets
+            {t(locale, "chords.myPresets")}
           </h2>
           <ul className="flex flex-col gap-2">
             {presets.map((preset) => (
@@ -462,7 +477,14 @@ export default function ChordsPageClient({
                   type="button"
                   disabled={isDeleting}
                   onClick={() => {
-                    if (!confirm(`Supprimer « ${preset.name} » ?`)) return;
+                    if (
+                      !confirm(
+                        t(locale, "chords.confirmDelete", {
+                          name: preset.name,
+                        }),
+                      )
+                    )
+                      return;
                     startDelete(async () => {
                       await deletePreset(preset.id);
                     });
@@ -474,9 +496,9 @@ export default function ChordsPageClient({
                     opacity: isDeleting ? 0.6 : 1,
                     cursor: isDeleting ? "wait" : undefined,
                   }}
-                  aria-label={`Supprimer ${preset.name}`}
+                  aria-label={`${t(locale, "chords.delete")} ${preset.name}`}
                 >
-                  {isDeleting ? "…" : "Supprimer"}
+                  {isDeleting ? "…" : t(locale, "chords.delete")}
                 </button>
               </li>
             ))}
@@ -495,7 +517,7 @@ export default function ChordsPageClient({
           className="text-xl font-bold"
           style={{ color: "var(--accent)" }}
         >
-          Bibliothèque d&apos;accords
+          {t(locale, "chords.library")}
         </h2>
         {libraryGroups.map((group) => (
           <div key={group.title}>

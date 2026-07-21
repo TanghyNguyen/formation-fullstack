@@ -5,6 +5,8 @@ export type PlaybackPrefs = {
   beatsPerChord: number;
   loop: boolean;
   metronome: boolean;
+  /** 1-based beat numbers that trigger a metronome click (sorted unique). */
+  metronomeBeats: number[];
   chordVolume: number;
   clickVolume: number;
 };
@@ -14,6 +16,7 @@ export const DEFAULT_PLAYBACK_PREFS: PlaybackPrefs = {
   beatsPerChord: 4,
   loop: true,
   metronome: false,
+  metronomeBeats: [1, 2, 3, 4],
   chordVolume: 60,
   clickVolume: 50,
 };
@@ -27,6 +30,48 @@ function clampInt(
   if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
   const n = Math.round(value);
   return Math.min(max, Math.max(min, n));
+}
+
+/** Normalize a raw beats list to sorted unique ints in 1..16; empty → [1]. */
+export function normalizeMetronomeBeats(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [...DEFAULT_PLAYBACK_PREFS.metronomeBeats];
+  }
+  const seen = new Set<number>();
+  for (const item of value) {
+    if (typeof item !== "number" || !Number.isFinite(item)) continue;
+    const n = Math.round(item);
+    if (n >= 1 && n <= 16) seen.add(n);
+  }
+  if (seen.size === 0) return [1];
+  return Array.from(seen).sort((a, b) => a - b);
+}
+
+/**
+ * Filter selection to 1..beatsPerChord. When beatsPerChord grows vs
+ * `previousBeatsPerChord`, newly available beats default to on.
+ */
+export function resolveMetronomeBeats(
+  beats: number[],
+  beatsPerChord: number,
+  previousBeatsPerChord: number = beatsPerChord,
+): number[] {
+  const n = clampInt(beatsPerChord, 1, 16, DEFAULT_PLAYBACK_PREFS.beatsPerChord);
+  const prevN = clampInt(
+    previousBeatsPerChord,
+    1,
+    16,
+    DEFAULT_PLAYBACK_PREFS.beatsPerChord,
+  );
+  const kept = normalizeMetronomeBeats(beats).filter((b) => b <= n);
+  const next = new Set(kept);
+  if (n > prevN) {
+    for (let b = prevN + 1; b <= n; b++) {
+      next.add(b);
+    }
+  }
+  if (next.size === 0) next.add(1);
+  return Array.from(next).sort((a, b) => a - b);
 }
 
 export function normalizePlaybackPrefs(
@@ -46,6 +91,7 @@ export function normalizePlaybackPrefs(
       typeof p.metronome === "boolean"
         ? p.metronome
         : DEFAULT_PLAYBACK_PREFS.metronome,
+    metronomeBeats: normalizeMetronomeBeats(p.metronomeBeats),
     chordVolume: clampInt(
       p.chordVolume,
       0,

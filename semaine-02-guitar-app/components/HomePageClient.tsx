@@ -35,12 +35,13 @@ import {
   subscribeGammesPrefs,
   writeGammesPrefs,
 } from "@/lib/gammes-prefs";
+import { savePlaybackProgression } from "@/lib/progression-playback";
+import { t } from "@/lib/i18n";
+import type { Locale } from "@/lib/locale";
 import {
   getLocaleSnapshot,
-  getServerLocaleSnapshot,
   subscribeLocale,
 } from "@/lib/locale";
-import { savePlaybackProgression } from "@/lib/progression-playback";
 
 type ScalePreset = {
   id: string;
@@ -73,6 +74,7 @@ export default function HomePageClient({
   scales,
   degreeStyles,
   chordLabels,
+  locale: localeProp,
 }: {
   isLoggedIn: boolean;
   presets: ScalePreset[];
@@ -80,7 +82,13 @@ export default function HomePageClient({
   scales: ScaleInfo[];
   degreeStyles: DegreeStyles;
   chordLabels: Record<string, string>;
+  locale: Locale;
 }) {
+  const locale = useSyncExternalStore(
+    subscribeLocale,
+    getLocaleSnapshot,
+    () => localeProp,
+  );
   const scaleLabels = Object.fromEntries(
     scales.map((scale) => [scale.key, scale.label]),
   );
@@ -97,11 +105,6 @@ export default function HomePageClient({
     subscribeGammesPrefs,
     () => getGammesPrefsSnapshot(fallbackScale, validScaleKeys),
     () => getServerGammesPrefsSnapshot(fallbackScale),
-  );
-  const locale = useSyncExternalStore(
-    subscribeLocale,
-    getLocaleSnapshot,
-    getServerLocaleSnapshot,
   );
   const { rootPc, currentScale, useFlats, showDegrees, chordCount } = prefs;
 
@@ -140,7 +143,7 @@ export default function HomePageClient({
   const [harmonizationError, setHarmonizationError] = useState<string | null>(
     null,
   );
-  const progressionsKey = `${currentScale}-${rootPc}-${chordCount}`;
+  const progressionsKey = `${currentScale}-${rootPc}-${chordCount}-${locale}`;
   const isInitialLoad =
     progressionsLoadedKey !== progressionsKey && !isRefreshing;
   const progressionsBusy = isInitialLoad || isRefreshing;
@@ -154,7 +157,7 @@ export default function HomePageClient({
   useEffect(() => {
     let cancelled = false;
 
-    fetchScaleHarmonization(currentScale, rootPc)
+    fetchScaleHarmonization(currentScale, rootPc, locale)
       .then((data) => {
         if (!cancelled) {
           setHarmonization(data);
@@ -164,16 +167,14 @@ export default function HomePageClient({
       .catch(() => {
         if (!cancelled) {
           setHarmonization(null);
-          setHarmonizationError(
-            "Impossible de charger l’harmonisation diatonique.",
-          );
+          setHarmonizationError(t(locale, "home.harmonizationError"));
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [currentScale, rootPc]);
+  }, [currentScale, rootPc, locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -209,13 +210,15 @@ export default function HomePageClient({
     fetchChordProgressions(currentScale, rootPc, {
       forceRefresh,
       chordCount,
+      locale,
     })
       .then((data: ChordProgressionsResponse) => {
         if (cancelled) return;
         // Ignore les réponses obsolètes (changement rapide de fondamentale/gamme)
         if (latestProgressionsKey.current !== keyAtRequest) return;
         if (
-          `${data.scale_key}-${data.root_pc}-${chordCount}` !== keyAtRequest
+          `${data.scale_key}-${data.root_pc}-${chordCount}-${locale}` !==
+          keyAtRequest
         ) {
           return;
         }
@@ -224,17 +227,21 @@ export default function HomePageClient({
         if (data.source === "rules") {
           setProgressionsNotice(
             data.ai_error?.includes("QUOTA")
-              ? "Quota IA épuisé — progressions de secours affichées. Passe à Ollama (local) ou Groq (gratuit)."
-              : "IA indisponible — progressions de secours affichées.",
+              ? t(locale, "home.aiNoticeQuota")
+              : t(locale, "home.aiNoticeFallback"),
           );
         } else {
           setProgressionsNotice(
             data.source === "ollama"
-              ? `Généré par Ollama (${data.model ?? "local"}) — gratuit, sans quota.`
+              ? t(locale, "home.aiNoticeOllama", {
+                  model: data.model ?? "local",
+                })
               : data.source === "groq"
-                ? `Généré par Groq (${data.model ?? "cloud"}) — IA gratuite en production.`
+                ? t(locale, "home.aiNoticeGroq", {
+                    model: data.model ?? "cloud",
+                  })
                 : data.cached
-                  ? "Progression en cache (même gamme / fondamentale)."
+                  ? t(locale, "home.aiNoticeCached")
                   : null,
           );
         }
@@ -247,22 +254,16 @@ export default function HomePageClient({
         const message =
           error instanceof Error ? error.message : "Erreur inconnue";
         if (message.includes("503")) {
-          setProgressionsError(
-            "Clé IA non configurée sur l'API (GROQ_API_KEY ou OPENAI_API_KEY).",
-          );
+          setProgressionsError(t(locale, "home.aiErrorKey"));
         } else if (
           message.includes("GROQ_API_KEY") ||
           message.includes("placeholder") ||
           message.includes("invalid") ||
           message.includes("OPENAI_API_KEY")
         ) {
-          setProgressionsError(
-            "Clé IA manquante ou invalide — configure GROQ_API_KEY sur Railway (voir DEPLOY-GROQ.md).",
-          );
+          setProgressionsError(t(locale, "home.aiErrorInvalid"));
         } else {
-          setProgressionsError(
-            "Impossible de charger les progressions IA pour le moment.",
-          );
+          setProgressionsError(t(locale, "home.aiErrorGeneric"));
         }
         setProgressionsLoadedKey(keyAtRequest);
       })
@@ -279,6 +280,7 @@ export default function HomePageClient({
     currentScale,
     rootPc,
     chordCount,
+    locale,
     progressionsKey,
     progressionsLoadedKey,
     refreshToken,
@@ -298,7 +300,7 @@ export default function HomePageClient({
       rootPc: preset.rootPc,
       currentScale: preset.scaleOrChord,
     });
-    const key = `${preset.scaleOrChord}-${preset.rootPc}-${prefs.chordCount}`;
+    const key = `${preset.scaleOrChord}-${preset.rootPc}-${prefs.chordCount}-${locale}`;
     setProgressions([
       {
         name: preset.name,
@@ -324,7 +326,7 @@ export default function HomePageClient({
         className="text-3xl font-bold mb-2"
         style={{ color: "var(--accent)" }}
       >
-        Guitar App
+        {t(locale, "home.title")}
       </h1>
       <div
         className="flex flex-wrap gap-4 py-4 px-4 rounded-lg items-end mb-6"
@@ -337,7 +339,7 @@ export default function HomePageClient({
           className="flex flex-col gap-1 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
-          Fondamentale
+          {t(locale, "home.root")}
           <select
             style={{
               background: "var(--wood-dark)",
@@ -359,7 +361,7 @@ export default function HomePageClient({
           className="flex flex-col gap-1 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
-          Gamme
+          {t(locale, "home.scale")}
           <select
             style={{
               background: "var(--wood-dark)",
@@ -381,7 +383,7 @@ export default function HomePageClient({
           className="flex flex-row items-center gap-2 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
-          Bémols
+          {t(locale, "home.flats")}
           <input
             type="checkbox"
             style={{
@@ -397,7 +399,7 @@ export default function HomePageClient({
           className="flex flex-row items-center gap-2 text-sm w-full sm:w-auto"
           style={{ color: "var(--muted)" }}
         >
-          Degrés
+          {t(locale, "home.degrees")}
           <input
             type="checkbox"
             checked={showDegrees}
@@ -413,11 +415,11 @@ export default function HomePageClient({
               className="flex flex-col gap-1 text-sm"
               style={{ color: "var(--muted)" }}
             >
-              Nom du preset
+              {t(locale, "home.presetName")}
               <input
                 name="name"
                 required
-                placeholder="Ex: Blues en La"
+                placeholder={t(locale, "home.presetPlaceholder")}
                 className="rounded-md px-3 py-2 text-sm"
                 style={{
                   background: "var(--wood-dark)",
@@ -436,12 +438,12 @@ export default function HomePageClient({
                 border: "1px solid var(--border-strong)",
               }}
             >
-              Sauvegarder
+              {t(locale, "home.save")}
             </SubmitButton>
           </form>
         ) : (
           <p className="text-sm" style={{ color: "var(--muted)" }}>
-            Connecte-toi pour sauvegarder un preset.
+            {t(locale, "home.loginToSave")}
           </p>
         )}
       </div>
@@ -473,15 +475,14 @@ export default function HomePageClient({
           className="text-xl font-bold mb-1"
           style={{ color: "var(--accent)" }}
         >
-          Harmonisation
           {harmonization?.mode === "adapted"
-            ? " adaptée"
-            : " diatonique"}
+            ? t(locale, "home.harmonizationAdapted")
+            : t(locale, "home.harmonization")}
         </h2>
         <p className="text-sm mb-1" style={{ color: "var(--muted)" }}>
           {harmonization?.mode === "adapted"
-            ? "Gamme à moins de 7 notes : accords et progressions adaptés automatiquement."
-            : "Règles théoriques (empilement de tierces) — distinct des suggestions IA ci-dessous."}
+            ? t(locale, "home.harmonizationHintAdapted")
+            : t(locale, "home.harmonizationHint")}
         </p>
         {harmonizationError && (
           <p className="text-sm" style={{ color: "var(--root)" }}>
@@ -514,7 +515,7 @@ export default function HomePageClient({
                           border: "1px solid var(--border)",
                           color: "var(--text)",
                         }}
-                        title="Voir cet accord sur le manche CAGED"
+                        title={t(locale, "home.viewOnCaged")}
                       >
                         <span className="font-semibold">
                           {chord.roman} — {NOTE_NAMES_SHARP[chord.root_pc]}{" "}
@@ -534,7 +535,7 @@ export default function HomePageClient({
                   className="font-semibold mb-2"
                   style={{ color: "var(--text)" }}
                 >
-                  Progressions courantes
+                  {t(locale, "home.commonProgressions")}
                 </h3>
                 <div className="flex flex-col gap-3">
                   {harmonization.progressions.map((progression) => (
@@ -562,7 +563,7 @@ export default function HomePageClient({
                                 border: "1px solid var(--border)",
                                 color: "var(--text)",
                               }}
-                              title="Voir cet accord sur le manche CAGED"
+                              title={t(locale, "home.viewOnCaged")}
                             >
                               {NOTE_NAMES_SHARP[chord.root_pc]}{" "}
                               {chordLabels[chord.chord_type] ??
@@ -592,7 +593,7 @@ export default function HomePageClient({
                             color: "#1a1208",
                           }}
                         >
-                          Lire
+                          {t(locale, "home.play")}
                         </button>
                       </div>
                       {isLoggedIn ? (
@@ -604,12 +605,15 @@ export default function HomePageClient({
                             className="flex flex-col gap-1 text-sm"
                             style={{ color: "var(--muted)" }}
                           >
-                            Nom de la progression
+                            {t(locale, "home.progressionName")}
                             <input
                               name="name"
                               required
                               defaultValue={progression.name}
-                              placeholder="Ex: I–V–vi–IV"
+                              placeholder={t(
+                                locale,
+                                "home.progressionPlaceholderCommon",
+                              )}
                               className="rounded-md px-3 py-2 text-sm"
                               style={{
                                 background: "var(--wood-dark)",
@@ -642,12 +646,12 @@ export default function HomePageClient({
                               border: "1px solid var(--border-strong)",
                             }}
                           >
-                            Enregistrer
+                            {t(locale, "home.saveProgression")}
                           </SubmitButton>
                         </form>
                       ) : (
                         <p className="text-sm" style={{ color: "var(--muted)" }}>
-                          Connecte-toi pour enregistrer cette progression.
+                          {t(locale, "home.loginToSave")}
                         </p>
                       )}
                     </article>
@@ -671,14 +675,14 @@ export default function HomePageClient({
             className="text-xl font-bold"
             style={{ color: "var(--accent)" }}
           >
-            Progressions d&apos;accords (IA)
+            {t(locale, "home.aiTitle")}
           </h2>
           <div className="flex flex-wrap items-end gap-2">
             <label
               className="flex flex-col gap-1 text-sm"
               style={{ color: "var(--muted)" }}
             >
-              Accords
+              {t(locale, "home.chordsCount")}
               <select
                 value={chordCount}
                 disabled={progressionsBusy}
@@ -712,23 +716,24 @@ export default function HomePageClient({
                 cursor: progressionsBusy ? "wait" : "pointer",
               }}
             >
-              {isRefreshing ? "Rafraîchissement…" : "Rafraîchir"}
+              {isRefreshing
+                ? t(locale, "home.refreshing")
+                : t(locale, "home.refresh")}
             </button>
           </div>
         </div>
         <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
-          Suggestions créatives (IA) pour{" "}
-          <strong style={{ color: "var(--text)" }}>
-            {NOTE_NAMES_SHARP[rootPc]} {scaleLabels[currentScale] ?? currentScale}
-          </strong>
-          — {chordCount} accords par progression, en complément de
-          l’harmonisation ci-dessus.
+          {t(locale, "home.aiIntro", {
+            root: NOTE_NAMES_SHARP[rootPc],
+            scale: scaleLabels[currentScale] ?? currentScale,
+            count: chordCount,
+          })}
         </p>
         {progressionsBusy && (
           <p className="text-sm mb-3" style={{ color: "var(--muted)" }}>
             {isRefreshing
-              ? "Nouvelles progressions en cours…"
-              : "Génération en cours…"}
+              ? t(locale, "home.aiRefreshing")
+              : t(locale, "home.aiLoading")}
           </p>
         )}
         {progressionsNotice && !isRefreshing && (
@@ -767,7 +772,7 @@ export default function HomePageClient({
                         color: "var(--text)",
                         cursor: "pointer",
                       }}
-                      title="Voir cet accord sur le manche CAGED"
+                      title={t(locale, "home.viewOnCaged")}
                     >
                       {NOTE_NAMES_SHARP[chord.root_pc]}{" "}
                       {chordLabels[chord.chord_type] ?? chord.chord_type}
@@ -790,7 +795,7 @@ export default function HomePageClient({
                     color: "#1a1208",
                   }}
                 >
-                  Lire
+                  {t(locale, "home.play")}
                 </button>
               </div>
               {isLoggedIn ? (
@@ -802,11 +807,11 @@ export default function HomePageClient({
                     className="flex flex-col gap-1 text-sm"
                     style={{ color: "var(--muted)" }}
                   >
-                    Nom de la progression
+                    {t(locale, "home.progressionName")}
                     <input
                       name="name"
                       required
-                      placeholder="Ex: Pop en Do"
+                      placeholder={t(locale, "home.progressionPlaceholder")}
                       className="rounded-md px-3 py-2 text-sm"
                       style={{
                         background: "var(--wood-dark)",
@@ -839,12 +844,12 @@ export default function HomePageClient({
                       border: "1px solid var(--border-strong)",
                     }}
                   >
-                    Enregistrer
+                    {t(locale, "home.saveProgression")}
                   </SubmitButton>
                 </form>
               ) : (
                 <p className="text-sm" style={{ color: "var(--muted)" }}>
-                  Connecte-toi pour enregistrer cette progression.
+                  {t(locale, "home.loginToSave")}
                 </p>
               )}
             </article>
@@ -856,7 +861,7 @@ export default function HomePageClient({
             className="text-xl font-bold mb-3"
             style={{ color: "var(--accent)" }}
           >
-            Mes progressions
+            {t(locale, "home.myProgressions")}
           </h2>
           <ul className="flex flex-col gap-2">
             {progressionPresets.map((preset) => {
@@ -907,13 +912,20 @@ export default function HomePageClient({
                       opacity: chords.length === 0 ? 0.5 : 1,
                     }}
                   >
-                    Lire
+                    {t(locale, "home.play")}
                   </button>
                   <button
                     type="button"
                     disabled={isDeleting}
                     onClick={() => {
-                      if (!confirm(`Supprimer « ${preset.name} » ?`)) return;
+                      if (
+                        !confirm(
+                          t(locale, "home.confirmDelete", {
+                            name: preset.name,
+                          }),
+                        )
+                      )
+                        return;
                       startDelete(async () => {
                         await deletePreset(preset.id);
                       });
@@ -925,9 +937,9 @@ export default function HomePageClient({
                       opacity: isDeleting ? 0.6 : 1,
                       cursor: isDeleting ? "wait" : undefined,
                     }}
-                    aria-label={`Supprimer ${preset.name}`}
+                    aria-label={`${t(locale, "home.delete")} ${preset.name}`}
                   >
-                    {isDeleting ? "…" : "Supprimer"}
+                    {isDeleting ? "…" : t(locale, "home.delete")}
                   </button>
                 </li>
               );
@@ -941,7 +953,7 @@ export default function HomePageClient({
             className="text-xl font-bold mb-3"
             style={{ color: "var(--accent)" }}
           >
-            Mes presets
+            {t(locale, "home.myPresets")}
           </h2>
           <ul className="flex flex-col gap-2">
             {presets.map((preset) => (
@@ -976,7 +988,14 @@ export default function HomePageClient({
                   type="button"
                   disabled={isDeleting}
                   onClick={() => {
-                    if (!confirm(`Supprimer « ${preset.name} » ?`)) return;
+                    if (
+                        !confirm(
+                          t(locale, "home.confirmDelete", {
+                            name: preset.name,
+                          }),
+                        )
+                      )
+                        return;
                     startDelete(async () => {
                       await deletePreset(preset.id);
                     });
@@ -988,9 +1007,9 @@ export default function HomePageClient({
                     opacity: isDeleting ? 0.6 : 1,
                     cursor: isDeleting ? "wait" : undefined,
                   }}
-                  aria-label={`Supprimer ${preset.name}`}
+                  aria-label={`${t(locale, "home.delete")} ${preset.name}`}
                 >
-                  {isDeleting ? "…" : "Supprimer"}
+                  {isDeleting ? "…" : t(locale, "home.delete")}
                 </button>
               </li>
             ))}

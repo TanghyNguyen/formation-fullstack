@@ -8,8 +8,9 @@ from openai import APIConnectionError, APIStatusError, AuthenticationError
 from pydantic import BaseModel, Field, ValidationError
 
 from caged import CHORD_ORDER
+from i18n import Locale, parse_locale, pick, scale_label
 from llm_provider import resolve_llm_provider
-from scales import SCALE_LABELS, SCALES, pitch_classes_from_root, scale_degrees_from_root
+from scales import SCALES, pitch_classes_from_root, scale_degrees_from_root
 
 NOTE_NAMES_SHARP = [
     "C",
@@ -126,12 +127,17 @@ def _align_progressions_to_root(
     return aligned
 
 
-def _build_prompt(scale_key: str, root_pc: int, chord_count: int) -> str:
+def _build_prompt(
+    scale_key: str,
+    root_pc: int,
+    chord_count: int,
+    locale: Locale = "fr",
+) -> str:
     intervals = SCALES[scale_key]
     scale_notes = [NOTE_NAMES_SHARP[pc] for pc in scale_degrees_from_root(root_pc, intervals)]
     highlight_notes = [NOTE_NAMES_SHARP[pc] for pc in pitch_classes_from_root(root_pc, intervals)]
     root_name = NOTE_NAMES_SHARP[root_pc]
-    scale_label = SCALE_LABELS.get(scale_key, scale_key)
+    display_name = scale_label(scale_key, locale)
     chord_types = ", ".join(CHORD_ORDER)
     tonic_type = "m" if "minor" in scale_key.lower() or scale_key in {
         "dorian",
@@ -141,18 +147,33 @@ def _build_prompt(scale_key: str, root_pc: int, chord_count: int) -> str:
         "pentatonicMinor",
     } else "M"
     tonic_roman = "i" if tonic_type == "m" else "I"
+    language = "English" if locale == "en" else "French"
+    language_instruction = pick(
+        locale,
+        (
+            "Écris les champs `name` et `description` en français. "
+            "Garde root_pc, chord_type et roman en codes techniques inchangés."
+        ),
+        (
+            "Write the `name` and `description` fields in English. "
+            "Keep root_pc, chord_type and roman as unchanged technical codes."
+        ),
+    )
 
     return f"""Tu es un professeur de guitare et d'harmonie.
 
+Language for text fields: {language}.
+{language_instruction}
+
 Contexte :
-- Gamme : {scale_label} (clé technique "{scale_key}")
+- Gamme : {display_name} (clé technique "{scale_key}")
 - Tonique : {root_name} (root_pc={root_pc})  ← OBLIGATOIRE pour l'accord I/i
 - Notes de la gamme (ordre diatonique) : {", ".join(scale_notes)}
 - Notes sur le manche (toutes tonalités) : {", ".join(highlight_notes)}
 - Types d'accords autorisés : {chord_types}
 
 Tâche :
-Propose exactement 2 progressions d'accords de **exactement {chord_count} accords chacune** cohérentes avec **cette gamme précise** ({scale_label} en {root_name}).
+Propose exactement 2 progressions d'accords de **exactement {chord_count} accords chacune** cohérentes avec **cette gamme précise** ({display_name} en {root_name}).
 Les accords doivent respecter l'harmonie de cette gamme — pas une autre.
 Chaque `root_pc` DOIT être une des pitch classes diatoniques : {", ".join(str(pc) for pc in scale_degrees_from_root(root_pc, intervals))}.
 L'accord de tonique (I/i) DOIT avoir root_pc={root_pc} ({root_name}).
@@ -176,7 +197,8 @@ Règles :
 - chord_type parmi la liste autorisée
 - roman en chiffres romains (I, ii, V7, etc.)
 - Ne JAMAIS renvoyer une progression en Do (root_pc=0) si la tonique demandée est autre
-- Progressions musicalement plausibles pour {root_name} {scale_label}
+- Progressions musicalement plausibles pour {root_name} {display_name}
+- name et description DOIVENT être rédigés en {language}
 """
 
 
@@ -194,8 +216,9 @@ def _cache_key(
     provider_name: str,
     model: str,
     chord_count: int,
+    locale: Locale = "fr",
 ) -> str:
-    return f"{provider_name}:{model}:{scale_key}:{root_pc}:{chord_count}"
+    return f"{provider_name}:{model}:{scale_key}:{root_pc}:{chord_count}:{locale}"
 
 
 def recommend_progressions_ai(
@@ -204,12 +227,16 @@ def recommend_progressions_ai(
     *,
     force_refresh: bool = False,
     chord_count: int = 4,
+    locale: str | Locale = "fr",
 ) -> dict:
     if chord_count < 3 or chord_count > 8:
         raise ValueError("chord_count must be between 3 and 8")
 
+    loc = parse_locale(locale)
     provider = resolve_llm_provider()
-    key = _cache_key(scale_key, root_pc, provider.name, provider.model, chord_count)
+    key = _cache_key(
+        scale_key, root_pc, provider.name, provider.model, chord_count, loc
+    )
 
     if (
         not force_refresh
@@ -222,7 +249,7 @@ def recommend_progressions_ai(
             result["cached"] = True
             return result
 
-    prompt = _build_prompt(scale_key, root_pc, chord_count)
+    prompt = _build_prompt(scale_key, root_pc, chord_count, loc)
     if force_refresh:
         prompt += (
             "\n\nIMPORTANT : propose des progressions DIFFÉRENTES "
@@ -286,6 +313,7 @@ def recommend_progressions_ai(
         "scale_key": scale_key,
         "root_pc": root_pc,
         "chord_count": chord_count,
+        "locale": loc,
         "source": provider.name,
         "model": provider.model,
         "progressions": progressions,

@@ -2,9 +2,16 @@ import { auth } from "@/auth";
 import { signInWithGoogle, signOutAction } from "@/app/actions/auth";
 import NavbarLinks from "@/components/NavbarLinks";
 import ThemeToggle from "@/components/ThemeToggle";
+import LocaleToggle from "@/components/LocaleToggle";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE, parseLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
 
 export default async function Navbar() {
   const session = await auth();
+  const cookieStore = await cookies();
+  const locale = parseLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+
   return (
     <nav
       className="px-6 py-0 flex h-15 items-center justify-between"
@@ -15,6 +22,7 @@ export default async function Navbar() {
     >
       <NavbarLinks />
       <div className="flex items-center gap-3 shrink-0">
+        <LocaleToggle />
         <ThemeToggle />
         {session?.user ? (
           <>
@@ -33,7 +41,7 @@ export default async function Navbar() {
                   border: "1px solid var(--border-strong)",
                 }}
               >
-                Se déconnecter
+                {t(locale, "nav.signOut")}
               </button>
             </form>
           </>
@@ -47,7 +55,7 @@ export default async function Navbar() {
                 border: "1px solid var(--border-strong)",
               }}
             >
-              Se connecter
+              {t(locale, "nav.signIn")}
             </button>
           </form>
         )}

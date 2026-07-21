@@ -1,14 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   applyTheme,
   migrateThemeFromLocalStorage,
   type Theme,
 } from "@/lib/theme";
+import {
+  getLocaleSnapshot,
+  subscribeLocale,
+} from "@/lib/locale";
+import { useServerLocale } from "@/components/LocaleProvider";
+import { t } from "@/lib/i18n";
 
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("dark");
+  const serverLocale = useServerLocale();
+  const locale = useSyncExternalStore(
+    subscribeLocale,
+    getLocaleSnapshot,
+    () => serverLocale,
+  );
 
   useEffect(() => {
     setTheme(migrateThemeFromLocalStorage());
@@ -35,7 +47,7 @@ export default function ThemeToggle() {
             ? "0 0 8px rgba(232, 165, 75, 0.85), 0 0 2px rgba(255, 220, 120, 0.9)"
             : "none",
         }}
-        title={bulbOn ? "Ampoule allumée" : "Ampoule éteinte"}
+        title={bulbOn ? t(locale, "theme.bulbOn") : t(locale, "theme.bulbOff")}
       >
         💡
       </span>
@@ -43,8 +55,12 @@ export default function ThemeToggle() {
         type="button"
         role="switch"
         aria-checked={isDark}
-        aria-label={isDark ? "Activer le mode clair" : "Activer le mode sombre"}
-        title={isDark ? "Mode clair" : "Mode sombre"}
+        aria-label={
+          isDark ? t(locale, "theme.ariaDark") : t(locale, "theme.ariaLight")
+        }
+        title={
+          isDark ? t(locale, "theme.titleDark") : t(locale, "theme.titleLight")
+        }
         onClick={toggle}
         className="relative inline-flex h-7 w-11 shrink-0 items-center rounded-md transition-colors"
         style={{

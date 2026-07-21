@@ -6,16 +6,17 @@ import os
 
 load_dotenv()
 
-from scales import SCALES, SCALE_LABELS, pitch_classes_from_root
+from scales import SCALES, pitch_classes_from_root
 from caged import (
     CAGED_POSITIONS,
-    LIBRARY_GROUPS,
     compute_frets,
     get_shape,
     list_chord_types,
+    library_groups,
 )
 from degrees import DEGREE_STYLES, chord_degree
 from harmonize import harmonize_scale
+from i18n import parse_locale, scale_label
 from recommend_ai import recommend_progressions_ai
 from recommend_fallback import recommend_progressions_fallback
 
@@ -51,11 +52,12 @@ def health():
 
 
 @app.get("/scales")
-def list_scales():
+def list_scales(locale: str = Query("fr")):
+    loc = parse_locale(locale)
     return [
         {
             "key": key,
-            "label": SCALE_LABELS[key],
+            "label": scale_label(key, loc),
             "intervals": intervals,
         }
         for key, intervals in SCALES.items()
@@ -82,20 +84,21 @@ def scale_notes(
 def scale_harmonization(
     name: str,
     root_pc: int = Query(..., ge=0, le=11, alias="root_pc"),
+    locale: str = Query("fr"),
 ):
     if name not in SCALES:
         raise HTTPException(status_code=404, detail=f"Scale '{name}' not found")
-    return harmonize_scale(name, root_pc)
+    return harmonize_scale(name, root_pc, locale=parse_locale(locale))
 
 
 @app.get("/chords/types")
-def chord_types():
-    return list_chord_types()
+def chord_types(locale: str = Query("fr")):
+    return list_chord_types(locale)
 
 
 @app.get("/chords/library")
-def chord_library():
-    return LIBRARY_GROUPS
+def chord_library(locale: str = Query("fr")):
+    return library_groups(locale)
 
 
 @app.get("/chords/caged/positions")
@@ -148,6 +151,7 @@ class RecommendRequest(BaseModel):
     root_pc: int = Field(..., ge=0, le=11)
     force_refresh: bool = False
     chord_count: int = Field(4, ge=3, le=8)
+    locale: str = "fr"
 
 
 @app.post("/recommend/chords")
@@ -157,12 +161,14 @@ def recommend_chords_for_scale(body: RecommendRequest):
             status_code=404, detail=f"Scale '{body.scale_key}' not found"
         )
 
+    locale = parse_locale(body.locale)
     try:
         return recommend_progressions_ai(
             body.scale_key,
             body.root_pc,
             force_refresh=body.force_refresh,
             chord_count=body.chord_count,
+            locale=locale,
         )
     except RuntimeError as exc:
         message = str(exc)
@@ -171,6 +177,7 @@ def recommend_chords_for_scale(body: RecommendRequest):
                 body.scale_key,
                 body.root_pc,
                 chord_count=body.chord_count,
+                locale=locale,
             )
             if fallback["progressions"]:
                 fallback["ai_error"] = message

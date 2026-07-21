@@ -20,6 +20,8 @@ import {
 import {
   getPlaybackPrefsSnapshot,
   getServerPlaybackPrefsSnapshot,
+  normalizeMetronomeBeats,
+  resolveMetronomeBeats,
   subscribePlaybackPrefs,
   writePlaybackPrefs,
 } from "@/lib/playback-prefs";
@@ -57,6 +59,7 @@ export default function ProgressionPlayer({
     beatsPerChord,
     loop,
     metronome,
+    metronomeBeats,
     chordVolume,
     clickVolume,
   } = prefs;
@@ -132,13 +135,30 @@ export default function ProgressionPlayer({
       playChord(chord.root_pc, intervals, {
         gain: chordGainFromVolume(currentPrefs.chordVolume),
       });
-      if (currentPrefs.metronome) {
+      if (
+        currentPrefs.metronome &&
+        currentPrefs.metronomeBeats.includes(1)
+      ) {
         playClick({
           gain: clickGainFromVolume(currentPrefs.clickVolume),
           accent: true,
         });
       }
     }
+  }
+
+  function toggleMetronomeBeat(n: number) {
+    const current = new Set(prefs.metronomeBeats);
+    if (current.has(n)) {
+      if (current.size <= 1) return;
+      current.delete(n);
+    } else {
+      current.add(n);
+    }
+    writePlaybackPrefs({
+      ...prefs,
+      metronomeBeats: normalizeMetronomeBeats(Array.from(current)),
+    });
   }
 
   async function handlePlay() {
@@ -192,13 +212,17 @@ export default function ProgressionPlayer({
         return;
       }
       const currentPrefs = prefsRef.current;
-      if (currentPrefs.metronome) {
+      const currentBeat = beatRef.current;
+      if (
+        currentPrefs.metronome &&
+        currentPrefs.metronomeBeats.includes(currentBeat)
+      ) {
         playClick({
           gain: clickGainFromVolume(currentPrefs.clickVolume),
           accent: false,
         });
       }
-      setBeat(beatRef.current);
+      setBeat(currentBeat);
     }, msPerBeat);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- timer driven by playing/bpm/beats/loop; volumes via prefsRef
@@ -361,7 +385,15 @@ export default function ProgressionPlayer({
                 16,
                 Math.max(1, Number.parseInt(beatsDraft, 10) || 4),
               );
-              writePlaybackPrefs({ ...prefs, beatsPerChord: next });
+              writePlaybackPrefs({
+                ...prefs,
+                beatsPerChord: next,
+                metronomeBeats: resolveMetronomeBeats(
+                  prefs.metronomeBeats,
+                  next,
+                  prefs.beatsPerChord,
+                ),
+              });
               setBeatsDraft(String(next));
             }}
             className="rounded-md px-3 py-2 text-sm w-20"
@@ -400,6 +432,38 @@ export default function ProgressionPlayer({
           />
           {t(locale, "player.metronome")}
         </label>
+
+        {metronome ? (
+          <div
+            className="flex flex-wrap items-center gap-1"
+            aria-label={t(locale, "player.metronomeBeats")}
+          >
+            <span className="text-sm mr-1" style={{ color: "var(--muted)" }}>
+              {t(locale, "player.metronomeBeats")}
+            </span>
+            {Array.from({ length: beatsPerChord }, (_, i) => {
+              const n = i + 1;
+              const on = metronomeBeats.includes(n);
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => toggleMetronomeBeat(n)}
+                  aria-pressed={on}
+                  className="text-sm font-semibold min-w-7 px-2 py-1 rounded-md"
+                  style={{
+                    background: on ? "var(--accent)" : "var(--wood-dark)",
+                    color: on ? "#1a1208" : "var(--muted)",
+                    border: "1px solid var(--border-strong)",
+                    opacity: on ? 1 : 0.7,
+                  }}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-3 flex flex-wrap items-end gap-4">
@@ -450,13 +514,14 @@ export default function ProgressionPlayer({
           {Array.from({ length: beatsPerChord }, (_, i) => {
             const n = i + 1;
             const active = beat === n;
+            const clicks = metronomeBeats.includes(n);
             return (
               <span
                 key={n}
                 className="text-sm font-semibold min-w-6 text-center"
                 style={{
                   color: active ? "var(--accent)" : "var(--muted)",
-                  opacity: active ? 1 : 0.55,
+                  opacity: active ? 1 : clicks ? 0.55 : 0.25,
                 }}
               >
                 {n}

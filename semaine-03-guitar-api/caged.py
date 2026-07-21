@@ -108,13 +108,22 @@ def get_shape(chord_type: str, position: str) -> dict[str, int | list[int]] | No
     return SHAPES.get(chord_type, {}).get(position)
 
 
-def list_chord_types() -> list[dict]:
+def list_chord_types(locale: str = "fr") -> list[dict]:
+    from i18n import chord_label, parse_locale
+
+    loc = parse_locale(locale)
     return [
         {
             "key": key,
-            "label": CHORD_LABELS[key],
+            "label": chord_label(key, loc),
             "intervals": CHORD_INTERVALS[key],
             "positions": list(SHAPES[key].keys()),
         }
         for key in CHORD_ORDER
     ]
+
+
+def library_groups(locale: str = "fr") -> list[dict]:
+    from i18n import LIBRARY_GROUPS_I18N, parse_locale
+
+    return LIBRARY_GROUPS_I18N[parse_locale(locale)]

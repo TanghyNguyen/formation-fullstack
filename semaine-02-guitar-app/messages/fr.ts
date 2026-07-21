@@ -87,6 +87,7 @@ export const fr = {
   "player.beats": "Temps / accord",
   "player.loop": "Boucle",
   "player.metronome": "Métronome",
+  "player.metronomeBeats": "Temps du clic",
   "player.chordVolume": "Volume accords",
   "player.clickVolume": "Volume métronome",
   "player.beatCounter": "Temps du métronome",

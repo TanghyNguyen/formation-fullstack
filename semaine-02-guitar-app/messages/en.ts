@@ -88,6 +88,7 @@ export const en: { [K in keyof typeof fr]: string } = {
   "player.beats": "Beats / chord",
   "player.loop": "Loop",
   "player.metronome": "Metronome",
+  "player.metronomeBeats": "Click beats",
   "player.chordVolume": "Chord volume",
   "player.clickVolume": "Metronome volume",
   "player.beatCounter": "Metronome beat",
