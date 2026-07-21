@@ -25,6 +25,7 @@ import {
 import { NOTE_NAMES_SHARP } from "@/lib/notes";
 import type { DegreeStyles } from "@/lib/music-types";
 import FretBoard from "@/components/FretBoard";
+import HomeSectionNav from "@/components/HomeSectionNav";
 import SubmitButton from "@/components/SubmitButton";
 import { createPreset, deletePreset } from "@/app/actions/presets";
 import {
@@ -34,6 +35,11 @@ import {
   subscribeGammesPrefs,
   writeGammesPrefs,
 } from "@/lib/gammes-prefs";
+import {
+  getLocaleSnapshot,
+  getServerLocaleSnapshot,
+  subscribeLocale,
+} from "@/lib/locale";
 import { savePlaybackProgression } from "@/lib/progression-playback";
 
 type ScalePreset = {
@@ -91,6 +97,11 @@ export default function HomePageClient({
     subscribeGammesPrefs,
     () => getGammesPrefsSnapshot(fallbackScale, validScaleKeys),
     () => getServerGammesPrefsSnapshot(fallbackScale),
+  );
+  const locale = useSyncExternalStore(
+    subscribeLocale,
+    getLocaleSnapshot,
+    getServerLocaleSnapshot,
   );
   const { rootPc, currentScale, useFlats, showDegrees, chordCount } = prefs;
 
@@ -434,16 +445,24 @@ export default function HomePageClient({
           </p>
         )}
       </div>
-      <FretBoard
-        highlightSet={highlightSet}
-        rootPc={rootPc}
-        useFlats={useFlats}
-        onCellClick={(pc) => setRootPc(pc)}
-        showDegrees={showDegrees}
-        scaleIntervals={scaleIntervals[currentScale] ?? []}
-        degreeStyles={degreeStyles}
+      <div id="fretboard">
+        <FretBoard
+          highlightSet={highlightSet}
+          rootPc={rootPc}
+          useFlats={useFlats}
+          onCellClick={(pc) => setRootPc(pc)}
+          showDegrees={showDegrees}
+          scaleIntervals={scaleIntervals[currentScale] ?? []}
+          degreeStyles={degreeStyles}
+        />
+      </div>
+      <HomeSectionNav
+        locale={locale}
+        showMyProgressions={isLoggedIn && progressionPresets.length > 0}
+        showMyPresets={isLoggedIn && presets.length > 0}
       />
       <section
+        id="harmonization"
         className="mt-8 rounded-lg py-4 px-4"
         style={{
           background: "var(--panel)",
@@ -640,6 +659,7 @@ export default function HomePageClient({
         )}
       </section>
       <section
+        id="ai-progressions"
         className="mt-8 rounded-lg py-4 px-4"
         style={{
           background: "var(--panel)",
@@ -831,7 +851,7 @@ export default function HomePageClient({
           ))}
       </section>
       {isLoggedIn && progressionPresets.length > 0 && (
-        <section className="mt-8">
+        <section id="my-progressions" className="mt-8">
           <h2
             className="text-xl font-bold mb-3"
             style={{ color: "var(--accent)" }}
@@ -916,7 +936,7 @@ export default function HomePageClient({
         </section>
       )}
       {isLoggedIn && presets.length > 0 && (
-        <section className="mt-8">
+        <section id="my-presets" className="mt-8">
           <h2
             className="text-xl font-bold mb-3"
             style={{ color: "var(--accent)" }}
