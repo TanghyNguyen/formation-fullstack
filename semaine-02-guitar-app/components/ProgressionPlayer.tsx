@@ -63,13 +63,15 @@ export default function ProgressionPlayer({
 
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [beat, setBeat] = useState(1); // 1-based for display
   const [bpmDraft, setBpmDraft] = useState(() =>
     String(getServerPlaybackPrefsSnapshot().bpm),
   );
   const [beatsDraft, setBeatsDraft] = useState(() =>
     String(getServerPlaybackPrefsSnapshot().beatsPerChord),
   );
-  const beatRef = useRef(0);
+  // 1-based: chord attack = beat 1 (accented); interval advances 2..N only.
+  const beatRef = useRef(1);
   const indexRef = useRef(0);
   const playingRef = useRef(false);
   const prefsRef = useRef(prefs);
@@ -107,24 +109,33 @@ export default function ProgressionPlayer({
     playingRef.current = playing;
   }, [playing]);
 
+  // Chord attack plays accented beat 1 with the chord; interval only fires weak beats 2..N (no double-accent on 1).
   function applyChord(nextIndex: number, withSound: boolean) {
     const chord = chords[nextIndex];
     if (!chord) return;
     setIndex(nextIndex);
     indexRef.current = nextIndex;
+    beatRef.current = 1;
+    setBeat(1);
     onChordChangeRef.current(chord);
     if (withSound) {
       const intervals = intervalsRef.current[chord.chord_type] ?? [0, 4, 7];
+      const currentPrefs = prefsRef.current;
       playChord(chord.root_pc, intervals, {
-        gain: chordGainFromVolume(prefsRef.current.chordVolume),
+        gain: chordGainFromVolume(currentPrefs.chordVolume),
       });
+      if (currentPrefs.metronome) {
+        playClick({
+          gain: clickGainFromVolume(currentPrefs.clickVolume),
+          accent: true,
+        });
+      }
     }
   }
 
   async function handlePlay() {
     const ready = await ensureAudioReady();
     if (!ready) return;
-    beatRef.current = 0;
     setPlaying(true);
     playingRef.current = true;
     applyChord(indexRef.current, true);
@@ -137,7 +148,6 @@ export default function ProgressionPlayer({
 
   function handlePrev() {
     const next = Math.max(0, indexRef.current - 1);
-    beatRef.current = 0;
     applyChord(next, true);
   }
 
@@ -150,7 +160,6 @@ export default function ProgressionPlayer({
         return;
       }
     }
-    beatRef.current = 0;
     applyChord(next, true);
   }
 
@@ -160,14 +169,7 @@ export default function ProgressionPlayer({
     const id = window.setInterval(() => {
       if (!playingRef.current) return;
       beatRef.current += 1;
-      const currentPrefs = prefsRef.current;
-      if (currentPrefs.metronome) {
-        playClick({
-          gain: clickGainFromVolume(currentPrefs.clickVolume),
-        });
-      }
-      if (beatRef.current >= beatsPerChord) {
-        beatRef.current = 0;
+      if (beatRef.current > beatsPerChord) {
         let next = indexRef.current + 1;
         if (next >= chords.length) {
           if (loop) {
@@ -179,7 +181,16 @@ export default function ProgressionPlayer({
           }
         }
         applyChord(next, true);
+        return;
       }
+      const currentPrefs = prefsRef.current;
+      if (currentPrefs.metronome) {
+        playClick({
+          gain: clickGainFromVolume(currentPrefs.clickVolume),
+          accent: false,
+        });
+      }
+      setBeat(beatRef.current);
     }, msPerBeat);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- timer driven by playing/bpm/beats/loop; volumes via prefsRef
@@ -245,7 +256,6 @@ export default function ProgressionPlayer({
             <button
               type="button"
               onClick={() => {
-                beatRef.current = 0;
                 applyChord(i, true);
               }}
               className="text-sm px-3 py-1.5 rounded-md"
@@ -423,6 +433,30 @@ export default function ProgressionPlayer({
           />
         </label>
       </div>
+
+      {playing ? (
+        <div
+          className="flex gap-2 mt-3"
+          aria-label={t(locale, "player.beatCounter")}
+        >
+          {Array.from({ length: beatsPerChord }, (_, i) => {
+            const n = i + 1;
+            const active = beat === n;
+            return (
+              <span
+                key={n}
+                className="text-sm font-semibold min-w-6 text-center"
+                style={{
+                  color: active ? "var(--accent)" : "var(--muted)",
+                  opacity: active ? 1 : 0.55,
+                }}
+              >
+                {n}
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }

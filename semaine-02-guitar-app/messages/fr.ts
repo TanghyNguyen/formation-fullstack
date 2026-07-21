@@ -85,4 +85,5 @@ export const fr = {
   "player.metronome": "Métronome",
   "player.chordVolume": "Volume accords",
   "player.clickVolume": "Volume métronome",
+  "player.beatCounter": "Temps du métronome",
 } as const;
