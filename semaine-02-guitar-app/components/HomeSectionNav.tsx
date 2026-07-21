@@ -35,7 +35,7 @@ export default function HomeSectionNav({
     const observer = new IntersectionObserver(
       ([entry]) => {
         // Fully visible → hide FAB; otherwise show.
-        setShowFab(!(entry?.isIntersecting ?? false));
+        setShowFab((entry?.intersectionRatio ?? 1) < 1);
       },
       { threshold: 1 },
     );
