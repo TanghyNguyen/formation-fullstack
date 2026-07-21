@@ -94,7 +94,7 @@ export function getPlaybackPrefsSnapshot(): PlaybackPrefs {
   }
 
   const saved = raw ? parsePlaybackPrefs(raw) : null;
-  const prefs = saved ?? DEFAULT_PLAYBACK_PREFS;
+  const prefs = saved ?? normalizePlaybackPrefs({});
 
   cachedRaw = raw;
   cachedPrefs = prefs;
@@ -103,17 +103,18 @@ export function getPlaybackPrefsSnapshot(): PlaybackPrefs {
 
 export function getServerPlaybackPrefsSnapshot(): PlaybackPrefs {
   if (serverSnapshotCache) return serverSnapshotCache;
-  serverSnapshotCache = DEFAULT_PLAYBACK_PREFS;
+  serverSnapshotCache = normalizePlaybackPrefs({});
   return serverSnapshotCache;
 }
 
 export function writePlaybackPrefs(prefs: PlaybackPrefs): void {
   if (typeof window === "undefined") return;
   try {
-    const raw = JSON.stringify(prefs);
+    const normalized = normalizePlaybackPrefs(prefs);
+    const raw = JSON.stringify(normalized);
     localStorage.setItem(STORAGE_KEY, raw);
     cachedRaw = raw;
-    cachedPrefs = prefs;
+    cachedPrefs = normalized;
     listeners.forEach((listener) => listener());
   } catch {
     // ignore private mode / blocked storage
