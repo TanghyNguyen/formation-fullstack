@@ -1,6 +1,6 @@
 # Guitar App — Manche interactif full-stack
 
-[Live demo](https://formation-fullstack.vercel.app/) · [API](https://formation-fullstack-production.up.railway.app/health)
+[Live demo](https://formation-fullstack.vercel.app/) · API FastAPI sur **Render** ([guide déploiement](../semaine-03-guitar-api/DEPLOY-GROQ.md))
 
 Application web pour visualiser **gammes** et **accords** sur le manche d'une guitare. Logique musicale servie par une **API FastAPI** (Python), UI et données utilisateur par **Next.js** (TypeScript).
 
@@ -8,7 +8,7 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 
 ```
 ┌─────────────────────────────┐         ┌──────────────────────────────┐
-│  Next.js — Vercel           │  HTTP   │  FastAPI — Railway           │
+│  Next.js — Vercel           │  HTTP   │  FastAPI — Render            │
 │  • UI React                 │ ──────► │  • Gammes / accords / degrés   │
 │  • Auth Google (Auth.js)    │         │  • Harmonisation + progressions│
 │  • Presets (Prisma + Neon)  │         │  • Tests pytest                │
@@ -18,7 +18,7 @@ Application web pour visualiser **gammes** et **accords** sur le manche d'une gu
 | Projet | Dossier | URL prod |
 |---|---|---|
 | Front | `semaine-02-guitar-app` | https://formation-fullstack.vercel.app |
-| API | `semaine-03-guitar-api` | https://formation-fullstack-production.up.railway.app |
+| API | `semaine-03-guitar-api` | `https://….onrender.com` (voir dashboard Render) |
 
 ## Captures d'écran
 

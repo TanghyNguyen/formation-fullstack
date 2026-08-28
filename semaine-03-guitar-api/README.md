@@ -2,7 +2,9 @@
 
 API REST Python pour la logique musicale de [Guitar App](../semaine-02-guitar-app/) (manche, CAGED, harmonisation, progressions IA). Les **presets** (gammes / accords / progressions sauvegardées) vivent côté Next.js + Neon, pas dans cette API.
 
-[Live API](https://formation-fullstack-production.up.railway.app/health) · [Swagger](https://formation-fullstack-production.up.railway.app/docs) · [Front](https://formation-fullstack.vercel.app/)
+[Guide déploiement Render](./DEPLOY-GROQ.md) · [Front](https://formation-fullstack.vercel.app/)
+
+> Prod : hébergée sur **Render** (`https://….onrender.com`).
 
 ## Stack
 
@@ -39,7 +41,7 @@ uvicorn main:app --reload --port 8000
 ### Exemple harmonisation diatonique
 
 ```bash
-curl "https://formation-fullstack-production.up.railway.app/scales/major/harmonization?root_pc=0"
+curl "https://TON-URL.onrender.com/scales/major/harmonization?root_pc=0"
 ```
 
 - Gamme à **7 notes** → harmonisation diatonique (`mode: "diatonic"`)
@@ -65,16 +67,16 @@ ollama pull llama3.1:8b         # ou un modèle déjà installé
 # dans .env : AI_PROVIDER=ollama
 ```
 
-**Cloud gratuit** — Groq pour Railway (limites journalières, mais généreux) :
+**Cloud gratuit** — Groq sur Render (limites journalières, mais généreux) :
 
 ```bash
-# .env Railway : AI_PROVIDER=groq + GROQ_API_KEY
+# Variables Render : AI_PROVIDER=groq + GROQ_API_KEY
 ```
 
 ### Exemple progressions IA
 
 ```bash
-curl -X POST "https://formation-fullstack-production.up.railway.app/recommend/chords" \
+curl -X POST "https://TON-URL.onrender.com/recommend/chords" \
   -H "Content-Type: application/json" \
   -d '{"scale_key":"major","root_pc":0,"chord_count":4}'
 ```
@@ -101,16 +103,13 @@ recommend_fallback.py  Secours rule-based
 tests/         pytest
 ```
 
-## Deploy Railway
+## Deploy Render
 
 - Root Directory : `semaine-03-guitar-api`
-- `Procfile` : `web: uvicorn main:app --host 0.0.0.0 --port $PORT`
+- Start : `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- Checklist complète : **[DEPLOY-GROQ.md](./DEPLOY-GROQ.md)**
 
-### Prod IA (Groq)
-
-Voir **[DEPLOY-GROQ.md](./DEPLOY-GROQ.md)** pour la checklist complète.
-
-Variables minimales Railway :
+Variables minimales :
 ```
 AI_PROVIDER=groq
 GROQ_API_KEY=gsk_...

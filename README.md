@@ -1,6 +1,6 @@
 # Formation full-stack
 
-[Live demo](https://formation-fullstack.vercel.app/) · [API](https://formation-fullstack-production.up.railway.app/health) · [Swagger](https://formation-fullstack-production.up.railway.app/docs)
+[Live demo](https://formation-fullstack.vercel.app/) · [API](https://formation-fullstack.vercel.app/) (front) · API FastAPI sur **Render** — voir [`semaine-03-guitar-api/DEPLOY-GROQ.md`](./semaine-03-guitar-api/DEPLOY-GROQ.md)
 
 Monorepo pédagogique : bases React → todo full-stack → **Guitar App** (Next.js + API FastAPI + IA).
 
@@ -19,7 +19,7 @@ Application pour visualiser **gammes** et **accords** sur le manche. Logique mus
 
 ```
 ┌─────────────────────────────┐         ┌──────────────────────────────┐
-│  Next.js — Vercel           │  HTTP   │  FastAPI — Railway           │
+│  Next.js — Vercel           │  HTTP   │  FastAPI — Render            │
 │  • Manche + CAGED           │ ──────► │  • Gammes / accords / degrés │
 │  • Auth Google (Auth.js)    │         │  • Harmonisation diatonique  │
 │  • Presets (Prisma + Neon)  │         │  • Progressions IA           │

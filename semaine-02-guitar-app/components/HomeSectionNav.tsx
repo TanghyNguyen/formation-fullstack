@@ -79,7 +79,7 @@ export default function HomeSectionNav({
               key={link.id}
               type="button"
               onClick={() => scrollToId(link.id)}
-              className="text-sm px-3 py-1.5 rounded-md"
+              className="text-sm px-3 py-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
               style={{
                 color: "var(--muted)",
                 border: "1px solid var(--border-strong)",
@@ -96,7 +96,7 @@ export default function HomeSectionNav({
           type="button"
           onClick={() => scrollToId("fretboard")}
           aria-label={t(locale, "home.backToFretboard")}
-          className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full text-sm font-semibold w-10 h-10"
+          className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full text-sm font-semibold w-11 h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
           style={{
             opacity: 0.75,
             background: "var(--panel)",

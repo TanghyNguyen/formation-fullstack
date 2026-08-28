@@ -32,6 +32,8 @@ app.add_middleware(
         "http://localhost:3000",
         "https://formation-fullstack.vercel.app",
     ],
+    # Preview deployments: formation-fullstack-….vercel.app
+    allow_origin_regex=r"https://formation-fullstack[\w-]*\.vercel\.app",
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
