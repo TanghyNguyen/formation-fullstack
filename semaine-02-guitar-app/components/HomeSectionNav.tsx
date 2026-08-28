@@ -21,6 +21,35 @@ function scrollToId(id: string): void {
   }
 }
 
+function HomeNavButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="text-sm font-semibold px-3 py-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+      style={{
+        color: hovered ? "#1a1208" : "var(--text)",
+        background: hovered ? "var(--accent)" : "var(--wood-dark)",
+        border: hovered
+          ? "1px solid var(--accent)"
+          : "1px solid var(--border-strong)",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function HomeSectionNav({
   locale,
   showMyProgressions,
@@ -71,18 +100,16 @@ export default function HomeSectionNav({
       <nav
         className="mt-4 mb-2 flex flex-wrap gap-2"
         aria-label={t(locale, "home.nav.label")}
+        data-home-section-nav="v2"
       >
         {links
           .filter((link) => link.show)
           .map((link) => (
-            <button
+            <HomeNavButton
               key={link.id}
-              type="button"
+              label={link.label}
               onClick={() => scrollToId(link.id)}
-              className="text-sm font-semibold px-3 py-2 rounded-md border bg-[var(--wood-dark)] text-[var(--text)] border-[var(--border-strong)] transition-colors duration-150 hover:bg-[var(--accent)] hover:text-[#1a1208] hover:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-            >
-              {link.label}
-            </button>
+            />
           ))}
       </nav>
 
