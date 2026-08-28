@@ -7,7 +7,12 @@ export type ChordType =
   | "dim"
   | "aug"
   | "sus2"
-  | "sus4";
+  | "sus4"
+  | "9"
+  | "maj9"
+  | "m9"
+  | "add9"
+  | "madd9";
 
 export type CagedPosition = "C" | "A" | "G" | "E" | "D";
 

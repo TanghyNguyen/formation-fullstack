@@ -64,12 +64,18 @@ CHORD_LABELS_I18N: dict[str, dict[Locale, str]] = {
     "aug": {"fr": "Augmenté", "en": "Augmented"},
     "sus2": {"fr": "Sus 2", "en": "Sus 2"},
     "sus4": {"fr": "Sus 4", "en": "Sus 4"},
+    "9": {"fr": "9ème dominante", "en": "Dominant 9th"},
+    "maj9": {"fr": "Majeur 9", "en": "Major 9"},
+    "m9": {"fr": "Mineur 9", "en": "Minor 9"},
+    "add9": {"fr": "Add 9", "en": "Add 9"},
+    "madd9": {"fr": "Mineur add 9", "en": "Minor add 9"},
 }
 
 LIBRARY_GROUPS_I18N: dict[Locale, list[dict]] = {
     "fr": [
         {"title": "Triades", "keys": ["M", "m", "dim", "aug", "sus2", "sus4"]},
         {"title": "Septièmes", "keys": ["7", "maj7", "m7"]},
+        {"title": "Neuvièmes", "keys": ["9", "maj9", "m9", "add9", "madd9"]},
     ],
     "en": [
         {
@@ -77,6 +83,10 @@ LIBRARY_GROUPS_I18N: dict[Locale, list[dict]] = {
             "keys": ["M", "m", "dim", "aug", "sus2", "sus4"],
         },
         {"title": "Sevenths", "keys": ["7", "maj7", "m7"]},
+        {
+            "title": "Ninths",
+            "keys": ["9", "maj9", "m9", "add9", "madd9"],
+        },
     ],
 }
 

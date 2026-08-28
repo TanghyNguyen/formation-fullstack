@@ -13,6 +13,23 @@ def test_open_e_major_e_shape():
     assert compute_frets(4, shape) == [0, 2, 2, 1, 0, 0]
 
 
+def test_open_e9_e_shape():
+    shape = get_shape("9", "E")
+    assert shape is not None
+    assert compute_frets(4, shape) == [0, 2, 0, 1, 0, 2]
+
+
+def test_open_cadd9_c_shape():
+    shape = get_shape("add9", "C")
+    assert shape is not None
+    assert compute_frets(0, shape) == [-1, 3, 2, 0, 3, 0]
+
+
+def test_ninth_types_are_listed():
+    keys = {t["key"] for t in list_chord_types()}
+    assert {"9", "maj9", "m9", "add9", "madd9"} <= keys
+
+
 def test_dim_has_fewer_positions_than_major():
     major = next(t for t in list_chord_types() if t["key"] == "M")
     dim = next(t for t in list_chord_types() if t["key"] == "dim")

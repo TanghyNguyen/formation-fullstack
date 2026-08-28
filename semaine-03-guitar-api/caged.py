@@ -2,7 +2,22 @@ OPEN_STRING_PITCH_CLASSES_LOW_TO_HIGH = [4, 9, 2, 7, 11, 4]
 
 CAGED_POSITIONS = ["C", "A", "G", "E", "D"]
 
-CHORD_ORDER = ["M", "m", "7", "m7", "maj7", "dim", "aug", "sus2", "sus4"]
+CHORD_ORDER = [
+    "M",
+    "m",
+    "7",
+    "m7",
+    "maj7",
+    "dim",
+    "aug",
+    "sus2",
+    "sus4",
+    "9",
+    "maj9",
+    "m9",
+    "add9",
+    "madd9",
+]
 
 CHORD_LABELS = {
     "M": "Majeur",
@@ -14,6 +29,11 @@ CHORD_LABELS = {
     "aug": "Augmenté",
     "sus2": "Sus 2",
     "sus4": "Sus 4",
+    "9": "9ème dominante",
+    "maj9": "Majeur 9",
+    "m9": "Mineur 9",
+    "add9": "Add 9",
+    "madd9": "Mineur add 9",
 }
 
 CHORD_INTERVALS = {
@@ -26,11 +46,17 @@ CHORD_INTERVALS = {
     "aug": [0, 4, 8],
     "sus2": [0, 2, 7],
     "sus4": [0, 5, 7],
+    "9": [0, 2, 4, 7, 10],
+    "maj9": [0, 2, 4, 7, 11],
+    "m9": [0, 2, 3, 7, 10],
+    "add9": [0, 2, 4, 7],
+    "madd9": [0, 2, 3, 7],
 }
 
 LIBRARY_GROUPS = [
     {"title": "Triades", "keys": ["M", "m", "dim", "aug", "sus2", "sus4"]},
     {"title": "Septièmes", "keys": ["7", "maj7", "m7"]},
+    {"title": "Neuvièmes", "keys": ["9", "maj9", "m9", "add9", "madd9"]},
 ]
 
 SHAPES: dict[str, dict[str, dict[str, int | list[int]]]] = {
@@ -87,6 +113,40 @@ SHAPES: dict[str, dict[str, dict[str, int | list[int]]]] = {
         "A": {"off": [-1, 0, 2, 2, 3, 0], "rs": 1, "ro": 0},
         "E": {"off": [0, 2, 2, 2, 0, 0], "rs": 0, "ro": 0},
         "D": {"off": [-1, -1, 0, 2, 3, 3], "rs": 2, "ro": 0},
+    },
+    "9": {
+        "C": {"off": [-1, 3, 2, 3, 3, 0], "rs": 1, "ro": 3},
+        "A": {"off": [-1, 0, 2, 0, 2, 0], "rs": 1, "ro": 0},
+        "G": {"off": [3, 2, 0, 2, 0, 1], "rs": 0, "ro": 3},
+        "E": {"off": [0, 2, 0, 1, 0, 2], "rs": 0, "ro": 0},
+        "D": {"off": [-1, -1, 0, 2, 1, 0], "rs": 2, "ro": 0},
+    },
+    "maj9": {
+        "C": {"off": [-1, 3, 2, 4, 3, 0], "rs": 1, "ro": 3},
+        "A": {"off": [-1, 0, 2, 1, 0, 0], "rs": 1, "ro": 0},
+        "G": {"off": [3, 2, 0, 2, 0, 2], "rs": 0, "ro": 3},
+        "E": {"off": [0, 2, 1, 1, 0, 2], "rs": 0, "ro": 0},
+        "D": {"off": [-1, -1, 0, 2, 2, 0], "rs": 2, "ro": 0},
+    },
+    "m9": {
+        "C": {"off": [-1, 3, 1, 3, 3, -1], "rs": 1, "ro": 3},
+        "A": {"off": [-1, 0, 2, 4, 1, 0], "rs": 1, "ro": 0},
+        "G": {"off": [3, 1, 0, 2, -1, 1], "rs": 0, "ro": 3},
+        "E": {"off": [0, 2, 0, 0, 0, 2], "rs": 0, "ro": 0},
+        "D": {"off": [-1, -1, 0, 2, 1, 1], "rs": 2, "ro": 0},
+    },
+    "add9": {
+        "C": {"off": [-1, 3, 2, 0, 3, 0], "rs": 1, "ro": 3},
+        "A": {"off": [-1, 0, 2, 4, 2, 0], "rs": 1, "ro": 0},
+        "G": {"off": [3, 2, 0, 2, 0, 3], "rs": 0, "ro": 3},
+        "E": {"off": [0, 2, 2, 1, 0, 2], "rs": 0, "ro": 0},
+        "D": {"off": [-1, -1, 0, 2, 3, 0], "rs": 2, "ro": 0},
+    },
+    "madd9": {
+        "C": {"off": [-1, 3, 1, 0, 3, -1], "rs": 1, "ro": 3},
+        "A": {"off": [-1, 0, 2, 4, 1, 0], "rs": 1, "ro": 0},
+        "G": {"off": [3, 1, 0, 2, -1, 3], "rs": 0, "ro": 3},
+        "E": {"off": [0, 2, 2, 0, 0, 2], "rs": 0, "ro": 0},
     },
 }
 

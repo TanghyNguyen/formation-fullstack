@@ -79,12 +79,7 @@ export default function HomeSectionNav({
               key={link.id}
               type="button"
               onClick={() => scrollToId(link.id)}
-              className="text-sm px-3 py-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-              style={{
-                color: "var(--muted)",
-                border: "1px solid var(--border-strong)",
-                background: "transparent",
-              }}
+              className="text-sm font-semibold px-3 py-2 rounded-md border bg-[var(--wood-dark)] text-[var(--text)] border-[var(--border-strong)] transition-colors duration-150 hover:bg-[var(--accent)] hover:text-[#1a1208] hover:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
             >
               {link.label}
             </button>
