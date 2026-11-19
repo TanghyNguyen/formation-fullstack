@@ -40,7 +40,7 @@ def resolve_llm_provider() -> LlmProvider:
             raise RuntimeError("GROQ_API_KEY is not configured")
         return LlmProvider(
             name="groq",
-            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+            model=os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b"),
             client=OpenAI(
                 api_key=api_key,
                 base_url="https://api.groq.com/openai/v1",

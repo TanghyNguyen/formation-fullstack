@@ -1,4 +1,11 @@
-from recommend_ai import _align_progressions_to_root, _is_tonic_roman
+from recommend_ai import (
+    ChordStep,
+    Progression,
+    ProgressionsPayload,
+    _align_progressions_to_root,
+    _is_tonic_roman,
+    _sanitize_progressions,
+)
 
 
 def test_is_tonic_roman():
@@ -50,3 +57,55 @@ def test_align_keeps_correct_progression():
     aligned = _align_progressions_to_root(progressions, 1, scale_pcs)
     assert aligned[0]["chords"][0]["root_pc"] == 1
     assert aligned[0]["chords"][1]["root_pc"] == 8
+
+
+def _payload(chords: list[dict]) -> ProgressionsPayload:
+    return ProgressionsPayload(
+        progressions=[
+            Progression(
+                name="Test",
+                description="desc",
+                chords=[ChordStep(**chord) for chord in chords],
+            )
+        ]
+    )
+
+
+def test_sanitize_rejects_shorter_than_requested_count():
+    payload = _payload(
+        [
+            {"root_pc": 0, "chord_type": "M", "roman": "I"},
+            {"root_pc": 7, "chord_type": "M", "roman": "V"},
+            {"root_pc": 5, "chord_type": "M", "roman": "IV"},
+        ]
+    )
+    assert _sanitize_progressions(payload, chord_count=4) == []
+
+
+def test_sanitize_keeps_exact_requested_count():
+    payload = _payload(
+        [
+            {"root_pc": 0, "chord_type": "M", "roman": "I"},
+            {"root_pc": 7, "chord_type": "M", "roman": "V"},
+            {"root_pc": 9, "chord_type": "m", "roman": "vi"},
+            {"root_pc": 5, "chord_type": "M", "roman": "IV"},
+            {"root_pc": 2, "chord_type": "m", "roman": "ii"},
+        ]
+    )
+    cleaned = _sanitize_progressions(payload, chord_count=4)
+    assert len(cleaned) == 1
+    assert len(cleaned[0]["chords"]) == 4
+    assert [c["roman"] for c in cleaned[0]["chords"]] == ["I", "V", "vi", "IV"]
+
+
+def test_sanitize_accepts_minimum_chord_count():
+    payload = _payload(
+        [
+            {"root_pc": 0, "chord_type": "M", "roman": "I"},
+            {"root_pc": 5, "chord_type": "M", "roman": "IV"},
+            {"root_pc": 7, "chord_type": "M", "roman": "V"},
+        ]
+    )
+    cleaned = _sanitize_progressions(payload, chord_count=3)
+    assert len(cleaned) == 1
+    assert len(cleaned[0]["chords"]) == 3

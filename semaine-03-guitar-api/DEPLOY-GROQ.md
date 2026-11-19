@@ -27,7 +27,7 @@ L’API FastAPI tourne sur **Render** (free). Groq fournit une API LLM **gratuit
 ```
 AI_PROVIDER=groq
 GROQ_API_KEY=gsk_ta_cle_ici
-GROQ_MODEL=llama-3.1-8b-instant
+GROQ_MODEL=qwen/qwen3.8-27b
 OPENAI_FALLBACK=true
 ```
 
@@ -74,7 +74,7 @@ Puis ouvre [formation-fullstack.vercel.app](https://formation-fullstack.vercel.a
 # semaine-03-guitar-api/.env
 AI_PROVIDER="groq"
 GROQ_API_KEY="gsk_..."
-GROQ_MODEL="llama-3.1-8b-instant"
+GROQ_MODEL="qwen/qwen3.8-27b"
 OPENAI_FALLBACK="true"
 ```
 

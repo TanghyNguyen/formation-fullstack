@@ -63,16 +63,18 @@ def _sanitize_progressions(
             sanitized = _sanitize_chord(step)
             if sanitized:
                 chords.append(sanitized.model_dump())
+        # Truncate excess, but never accept shorter than requested.
         if len(chords) > chord_count:
             chords = chords[:chord_count]
-        if len(chords) >= 3:
-            cleaned.append(
-                {
-                    "name": progression.name.strip(),
-                    "description": progression.description.strip(),
-                    "chords": chords,
-                }
-            )
+        if len(chords) != chord_count:
+            continue
+        cleaned.append(
+            {
+                "name": progression.name.strip(),
+                "description": progression.description.strip(),
+                "chords": chords,
+            }
+        )
     return cleaned
 
 
@@ -178,7 +180,7 @@ Les accords doivent respecter l'harmonie de cette gamme — pas une autre.
 Chaque `root_pc` DOIT être une des pitch classes diatoniques : {", ".join(str(pc) for pc in scale_degrees_from_root(root_pc, intervals))}.
 L'accord de tonique (I/i) DOIT avoir root_pc={root_pc} ({root_name}).
 
-Réponds UNIQUEMENT en JSON valide avec ce schéma :
+Réponds UNIQUEMENT en JSON valide avec ce schéma (le tableau `chords` doit avoir {chord_count} éléments) :
 {{
   "progressions": [
     {{
@@ -192,7 +194,8 @@ Réponds UNIQUEMENT en JSON valide avec ce schéma :
 }}
 
 Règles :
-- Chaque progression DOIT contenir exactement {chord_count} accords (ni plus, ni moins)
+- Chaque progression DOIT contenir exactement {chord_count} accords dans `chords` (ni plus, ni moins)
+- Une progression avec un nombre d'accords différent de {chord_count} est INVALIDE
 - root_pc entier entre 0 et 11, parmi les notes de la gamme
 - chord_type parmi la liste autorisée
 - roman en chiffres romains (I, ii, V7, etc.)

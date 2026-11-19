@@ -113,7 +113,7 @@ Variables minimales :
 ```
 AI_PROVIDER=groq
 GROQ_API_KEY=gsk_...
-GROQ_MODEL=llama-3.1-8b-instant
+GROQ_MODEL=qwen/qwen3.8-27b
 OPENAI_FALLBACK=true
 ```
 
