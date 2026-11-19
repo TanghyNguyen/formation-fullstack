@@ -23,7 +23,7 @@ import {
   normalizeMetronomeBeats,
   resolveMetronomeBeats,
   subscribePlaybackPrefs,
-  writePlaybackPrefs,
+  updatePlaybackPrefs,
 } from "@/lib/playback-prefs";
 
 type ProgressionPlayerProps = {
@@ -148,17 +148,38 @@ export default function ProgressionPlayer({
   }
 
   function toggleMetronomeBeat(n: number) {
-    const current = new Set(prefs.metronomeBeats);
+    const current = new Set(getPlaybackPrefsSnapshot().metronomeBeats);
     if (current.has(n)) {
       if (current.size <= 1) return;
       current.delete(n);
     } else {
       current.add(n);
     }
-    writePlaybackPrefs({
-      ...prefs,
+    updatePlaybackPrefs({
       metronomeBeats: normalizeMetronomeBeats(Array.from(current)),
     });
+  }
+
+  function commitBpm(raw: string) {
+    const next = Math.min(200, Math.max(40, Number.parseInt(raw, 10) || 80));
+    updatePlaybackPrefs({ bpm: next });
+    setBpmDraft(String(next));
+    return next;
+  }
+
+  function commitBeatsPerChord(raw: string) {
+    const next = Math.min(16, Math.max(1, Number.parseInt(raw, 10) || 4));
+    const current = getPlaybackPrefsSnapshot();
+    updatePlaybackPrefs({
+      beatsPerChord: next,
+      metronomeBeats: resolveMetronomeBeats(
+        current.metronomeBeats,
+        next,
+        current.beatsPerChord,
+      ),
+    });
+    setBeatsDraft(String(next));
+    return next;
   }
 
   async function handlePlay() {
@@ -193,14 +214,18 @@ export default function ProgressionPlayer({
 
   useEffect(() => {
     if (!playing) return;
-    const msPerBeat = (60_000 / bpm) | 0;
+    const msPerBeat = Math.max(1, (60_000 / bpm) | 0);
     const id = window.setInterval(() => {
       if (!playingRef.current) return;
+      // Live store read: prefsRef lags one paint behind writePlaybackPrefs.
+      const currentPrefs = getPlaybackPrefsSnapshot();
+      prefsRef.current = currentPrefs;
+      const beatsLimit = currentPrefs.beatsPerChord;
       beatRef.current += 1;
-      if (beatRef.current > beatsPerChord) {
+      if (beatRef.current > beatsLimit) {
         let next = indexRef.current + 1;
         if (next >= chords.length) {
-          if (loop) {
+          if (currentPrefs.loop) {
             next = 0;
           } else {
             setPlaying(false);
@@ -211,7 +236,6 @@ export default function ProgressionPlayer({
         applyChord(next, true);
         return;
       }
-      const currentPrefs = prefsRef.current;
       const currentBeat = beatRef.current;
       if (
         currentPrefs.metronome &&
@@ -225,8 +249,8 @@ export default function ProgressionPlayer({
       setBeat(currentBeat);
     }, msPerBeat);
     return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- timer driven by playing/bpm/beats/loop; volumes via prefsRef
-  }, [playing, bpm, beatsPerChord, loop, metronome, chords.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- timer period from bpm; beats/loop/metronome via store snapshot
+  }, [playing, bpm, chords.length]);
 
   // Sync first chord to Accords view when player mounts
   useEffect(() => {
@@ -351,14 +375,20 @@ export default function ProgressionPlayer({
             min={40}
             max={200}
             value={bpmDraft}
-            onChange={(e) => setBpmDraft(e.target.value)}
-            onBlur={() => {
-              const next = Math.min(
-                200,
-                Math.max(40, Number.parseInt(bpmDraft, 10) || 80),
-              );
-              writePlaybackPrefs({ ...prefs, bpm: next });
-              setBpmDraft(String(next));
+            onChange={(e) => {
+              const raw = e.target.value;
+              setBpmDraft(raw);
+              const parsed = Number.parseInt(raw, 10);
+              // Live commit only for in-range values (avoids "8" while typing "80").
+              if (Number.isFinite(parsed) && parsed >= 40 && parsed <= 200) {
+                updatePlaybackPrefs({ bpm: parsed });
+              }
+            }}
+            onBlur={() => commitBpm(bpmDraft)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
             }}
             className="rounded-md px-3 py-2 text-sm w-20"
             style={{
@@ -379,22 +409,26 @@ export default function ProgressionPlayer({
             min={1}
             max={16}
             value={beatsDraft}
-            onChange={(e) => setBeatsDraft(e.target.value)}
-            onBlur={() => {
-              const next = Math.min(
-                16,
-                Math.max(1, Number.parseInt(beatsDraft, 10) || 4),
-              );
-              writePlaybackPrefs({
-                ...prefs,
-                beatsPerChord: next,
-                metronomeBeats: resolveMetronomeBeats(
-                  prefs.metronomeBeats,
-                  next,
-                  prefs.beatsPerChord,
-                ),
-              });
-              setBeatsDraft(String(next));
+            onChange={(e) => {
+              const raw = e.target.value;
+              setBeatsDraft(raw);
+              // Spinner / complete values only — avoid committing interim "1" while typing "10".
+              const parsed = Number.parseInt(raw, 10);
+              if (
+                Number.isFinite(parsed) &&
+                parsed >= 1 &&
+                parsed <= 16 &&
+                String(parsed) === raw &&
+                Math.abs(parsed - beatsPerChord) === 1
+              ) {
+                commitBeatsPerChord(raw);
+              }
+            }}
+            onBlur={() => commitBeatsPerChord(beatsDraft)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
             }}
             className="rounded-md px-3 py-2 text-sm w-20"
             style={{
@@ -412,9 +446,7 @@ export default function ProgressionPlayer({
           <input
             type="checkbox"
             checked={loop}
-            onChange={(e) =>
-              writePlaybackPrefs({ ...prefs, loop: e.target.checked })
-            }
+            onChange={(e) => updatePlaybackPrefs({ loop: e.target.checked })}
           />
           {t(locale, "player.loop")}
         </label>
@@ -427,7 +459,7 @@ export default function ProgressionPlayer({
             type="checkbox"
             checked={metronome}
             onChange={(e) =>
-              writePlaybackPrefs({ ...prefs, metronome: e.target.checked })
+              updatePlaybackPrefs({ metronome: e.target.checked })
             }
           />
           {t(locale, "player.metronome")}
@@ -478,8 +510,7 @@ export default function ProgressionPlayer({
             max={100}
             value={chordVolume}
             onChange={(e) =>
-              writePlaybackPrefs({
-                ...prefs,
+              updatePlaybackPrefs({
                 chordVolume: Number.parseInt(e.target.value, 10),
               })
             }
@@ -497,8 +528,7 @@ export default function ProgressionPlayer({
             max={100}
             value={clickVolume}
             onChange={(e) =>
-              writePlaybackPrefs({
-                ...prefs,
+              updatePlaybackPrefs({
                 clickVolume: Number.parseInt(e.target.value, 10),
               })
             }

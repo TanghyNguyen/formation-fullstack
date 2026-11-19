@@ -317,7 +317,7 @@ export default function HomePageClient({
   function startPlayback(name: string, chords: ChordRecommendation[]) {
     if (chords.length === 0) return;
     savePlaybackProgression({ name, chords });
-    router.push("/chords");
+    router.push("/chords", { scroll: false });
   }
 
   return (

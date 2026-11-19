@@ -3,6 +3,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
   useTransition,
@@ -156,6 +157,7 @@ export default function ChordsPageClient({
   const [chordFrets, setChordFrets] = useState<number[] | null>(null);
   const [isDeleting, startDelete] = useTransition();
   const [playback, setPlayback] = useState<PlaybackProgression | null>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
 
   if (urlParams && urlParams.key !== syncedUrlKey) {
     setSyncedUrlKey(urlParams.key);
@@ -187,6 +189,11 @@ export default function ChordsPageClient({
     // Persist deep-links once per URL key; avoid looping on object identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only when URL chord target changes
   }, [urlParams?.key]);
+
+  useEffect(() => {
+    if (!playback) return;
+    playerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [playback]);
 
   const prefs = urlOverride ?? storedPrefs;
   const { rootPc, chordType, cagedPos, useFlats } = prefs;
@@ -268,14 +275,16 @@ export default function ChordsPageClient({
         {t(locale, "chords.title")}
       </h1>
       {playback && (
-        <ProgressionPlayer
-          progression={playback}
-          chordLabels={chordLabels}
-          intervalsByType={intervalsByType}
-          onChordChange={handlePlaybackChord}
-          onExit={handleExitPlayback}
-          locale={locale}
-        />
+        <div ref={playerRef}>
+          <ProgressionPlayer
+            progression={playback}
+            chordLabels={chordLabels}
+            intervalsByType={intervalsByType}
+            onChordChange={handlePlaybackChord}
+            onExit={handleExitPlayback}
+            locale={locale}
+          />
+        </div>
       )}
       <div
         className="flex flex-wrap gap-4 py-4 px-4 rounded-lg items-end mb-6"

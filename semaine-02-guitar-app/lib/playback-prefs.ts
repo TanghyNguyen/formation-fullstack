@@ -166,3 +166,8 @@ export function writePlaybackPrefs(prefs: PlaybackPrefs): void {
     // ignore private mode / blocked storage
   }
 }
+
+/** Merge a patch onto the latest snapshot (avoids stale spread overwrites). */
+export function updatePlaybackPrefs(patch: Partial<PlaybackPrefs>): void {
+  writePlaybackPrefs({ ...getPlaybackPrefsSnapshot(), ...patch });
+}
